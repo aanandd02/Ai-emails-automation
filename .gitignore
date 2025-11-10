@@ -1,0 +1,20 @@
+# Node dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Google credentials file
+src/config/google-credentials.json
+
+# Personal data files
+data/sentEmails.json
+data/*.pdf
+
+# Logs and temp files
+*.log
+logs/
+.DS_Store
+
+# Local config or test files
+*.local

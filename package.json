@@ -1,0 +1,26 @@
+{
+  "name": "ai-hr-email-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "Anand Shukla",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.21.0",
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "googleapis": "^165.0.0",
+    "nodemailer": "^7.0.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
