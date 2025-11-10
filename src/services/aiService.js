@@ -127,7 +127,7 @@ function buildBeautifulTemplate(
         📧 <a href="mailto:${email}">${email}</a><br>
         🌐 <a href="${portfolio}">Portfolio</a> |
         <a href="${linkedin}">LinkedIn</a> |
-        📄 <a href="https://drive.google.com/file/d/1dqHj0e59CKZQNcpaXIuTdIxhZNoeIa7M/view?usp=sharing">Resume</a>
+        📄 <a href="https://drive.google.com/file/d/1KECDLZw9SbXcVTbGBC7mBS4waAWJMIcf/view?usp=sharing">Resume</a>
       </p>
     </div>
   </body>
