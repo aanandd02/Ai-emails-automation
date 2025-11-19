@@ -43,7 +43,6 @@ function saveSentEmails(emails) {
 
 export async function sendEmailsFromGoogleSheet() {
   try {
-    console.log("📬 Starting email automation...");
     const sentEmails = loadSentEmails();
 
     const users = await readGoogleSheetData();
