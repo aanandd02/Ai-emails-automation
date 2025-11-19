@@ -7,7 +7,6 @@ async function main() {
   try {
     console.log("📬 Starting email automation...");
     await sendEmailsFromGoogleSheet();
-    console.log("✅ All emails processed successfully!");
   } catch (error) {
     console.error("❌ Error in sending emails:", error.message);
   }
