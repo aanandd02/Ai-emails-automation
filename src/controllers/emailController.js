@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = path.resolve(__dirname, "../../");
 
-// ✅ single source of truth
+// Single source of truth
 const SENT_EMAILS_FILE = path.join(projectRoot, "data", "sentEmails.json");
 
 function loadSentEmails() {
@@ -61,14 +61,12 @@ export async function sendEmailsFromGoogleSheet() {
       const { name, email, status, rowNumber } = validUsers[i];
 
       if (status?.toLowerCase() === "sent" || sentEmails.includes(email)) {
-        console.log(`⏩ Skipping ${email} — already sent.`);
         continue;
       }
 
       console.log(`📨 (${i + 1}/${validUsers.length}) Preparing email for ${email}...`);
 
       try {
-        // ✨ unique AI subject + content
         const subject = await generateUniqueSubject(name);
         const emailBody = await generateEmail(name);
 
