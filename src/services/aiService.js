@@ -33,7 +33,8 @@ Greeting: "${greeting}"
 Mention I'm Anand Shukla, a Final year student at IIIT Nagpur, experienced with Node.js, Express.js, MongoDB, and REST APIs.
 Mention my internship at BrandX (optimized APIs and authentication), and projects:
 1. CodeSavantAI (LangChain + Gemini)
-2. MealStack (secure backend).
+2. AI Email Automation(Node.js + Gemini)
+3. MealStack (secure backend).
 End politely with thanks and confidence.
 Do NOT include my name or contact details in the main body. 
 Do NOT add 'Sincerely' or any sign-off lines — end exactly at that point.
