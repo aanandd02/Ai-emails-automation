@@ -1,4 +1,3 @@
-// main.js
 import dotenv from "dotenv";
 import { sendEmailsFromGoogleSheet } from "./src/controllers/emailController.js";
 

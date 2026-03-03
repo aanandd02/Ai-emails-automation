@@ -1,8 +1,10 @@
-// src/services/googleSheetService.js
 import { google } from "googleapis";
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,8 +12,15 @@ const __dirname = path.dirname(__filename);
 const credentialsPath = path.resolve(__dirname, "../config/google-credentials.json");
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
-const GOOGLE_SHEET_ID = "1AWwp1NaHVOICUvzDgGHWo2EiWYq_SovyX_x6XRW5PLA";
-const SHEET_NAME = "Sheet1";
+const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || "Sheet1";
+
+if (!GOOGLE_SHEET_ID) {
+  throw new Error("Missing required env var: GOOGLE_SHEET_ID");
+}
+if (!fs.existsSync(credentialsPath)) {
+  throw new Error(`Missing Google credentials file at: ${credentialsPath}`);
+}
 
 const credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf-8"));
 const auth = new google.auth.GoogleAuth({
@@ -20,9 +29,6 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: "v4", auth });
 
-/**
- * 🧾 Read data from Google Sheet (name, email, status)
- */
 export async function readGoogleSheetData() {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: GOOGLE_SHEET_ID,
@@ -39,11 +45,8 @@ export async function readGoogleSheetData() {
   }));
 }
 
-/**
- * ✏️ Update status in Google Sheet (same row)
- */
 export async function updateStatusInGoogleSheet(rowIndex, status) {
-  const range = `${SHEET_NAME}!C${rowIndex}`; // ✅ Correct — same row, column C
+  const range = `${SHEET_NAME}!C${rowIndex}`;
   await sheets.spreadsheets.values.update({
     spreadsheetId: GOOGLE_SHEET_ID,
     range,

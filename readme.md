@@ -1,181 +1,130 @@
-# 🤖 AI Email Automation System
+# AI HR Email Automation
 
-An intelligent email automation tool that uses **Google Gemini AI**, **Google Sheets**, and **Node.js** to send personalized emails automatically.  
-Built by **Anand Shukla** 🚀
+Automates personalized job or internship outreach emails using:
+- Google Sheets as the contact source
+- Groq LLM for dynamic email generation
+- Gmail (Nodemailer) for delivery
+- Local JSON storage for duplicate prevention
 
----
+## What It Does
+- Reads `Name`, `Email`, and `Status` from Google Sheet columns `A:C`
+- Skips rows already marked as `Sent`
+- Skips recipients already present in local sent history
+- Generates a personalized subject and HTML email body
+- Sends email via Gmail App Password
+- Updates Google Sheet status to `Sent` or `Failed`
+- Waits a randomized delay between sends to mimic human pacing
 
-## ✨ Overview
+## Tech Stack
+- Node.js (ESM)
+- Groq SDK
+- Google Sheets API (`googleapis`)
+- Nodemailer
+- dotenv
 
-This project automates the process of sending job or internship application emails.  
-It reads contact details from **Google Sheets**, generates unique and human-like email content using **Gemini AI**, attaches your resume, and sends the email through **Gmail** — all automatically, with smart delays and duplicate protection.
-
----
-
-## 🧠 Key Features
-
-✅ **AI-Generated Content** – Personalized, short, and professional emails using Google Gemini  
-✅ **Google Sheet Integration** – Reads names, emails, and updates "Sent"/"Failed" status  
-✅ **Automated Gmail Sending** – Uses Nodemailer + App Password (secure)  
-✅ **Duplicate Protection** – Tracks previously sent emails in `sentEmails.json`  
-✅ **Human-Like Behavior** – Random delays between emails (30–60s)  
-✅ **Attachment Support** – Sends resume or any other file  
-✅ **Beautiful HTML Template** – Clean and professional design  
-
----
-
-## 🏗️ Project Structure
-
-```
-
-ai-email-automation/
-│
-├── src/
-│   ├── config/
-│   │   ├── geminiaiConfig.js
-│   │   ├── mailConfig.js
-│   │   └── google-credentials.json   ← ⚠️ Do not upload
-│   ├── controllers/
-│   │   └── emailController.js
-│   ├── services/
-│   │   ├── aiService.js
-│   │   ├── mailService.js
-│   │   ├── googleSheetService.js
-│   │   └── sentEmailService.js
-│   └── utils/
-│       └── delay.js
-│
-├── data/
-│   ├── sentEmails.json
-│   └── Anand_Shukla.pdf
-│
-├── .env
-├── .gitignore
+## Project Structure
+```text
+.
 ├── index.js
 ├── package.json
-└── README.md
+├── src
+│   ├── config
+│   │   ├── groqConfig.js
+│   │   └── mailConfig.js
+│   ├── controllers
+│   │   └── emailController.js
+│   ├── services
+│   │   ├── aiService.js
+│   │   ├── googleSheetService.js
+│   │   ├── mailService.js
+│   │   └── sentEmailService.js
+│   └── utils
+│       └── delay.js
+└── data
+    └── sentEmails.json (auto-created)
+```
 
-````
+## Prerequisites
+- Node.js 18+
+- Gmail account with 2FA enabled
+- Gmail App Password
+- Groq API key
+- Google Cloud service account with Sheets API enabled
 
----
+## Environment Variables
+Create a `.env` file in project root:
 
-## ⚙️ Setup Instructions
+```env
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASS=your_gmail_app_password
+GROQ_API_KEY=your_groq_api_key
+GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SHEET_NAME=Sheet1
+```
 
-### 1️⃣ Clone Repository
-```bash
-git clone https://github.com/aanandd02/ai-email-automation.git
-cd ai-email-automation
-````
+Notes:
+- `GOOGLE_SHEET_NAME` is optional (defaults to `Sheet1`).
+- Missing required variables will fail fast on startup.
 
-### 2️⃣ Install Dependencies
+## Google Sheets Setup
+1. Enable Google Sheets API in Google Cloud.
+2. Create a Service Account.
+3. Download service account JSON credentials.
+4. Place it at:
 
+```text
+src/config/google-credentials.json
+```
+
+5. Share your target Google Sheet with the service account email.
+6. Ensure sheet format:
+
+| Column A | Column B | Column C |
+| --- | --- | --- |
+| Name | Email | Status |
+
+## Installation
 ```bash
 npm install
 ```
 
-### 3️⃣ Configure Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-# Google Gemini API Key
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Gmail Credentials
-GMAIL_USER=your_email@gmail.com
-GMAIL_APP_PASS=your_gmail_app_password
-```
-
-> ⚠️ Never commit `.env` file to GitHub!
-
----
-
-### 4️⃣ Setup Google Sheets API
-
-* Go to [Google Cloud Console](https://console.cloud.google.com/)
-* Create a **Service Account** and enable **Google Sheets API**
-* Download the JSON credentials and save it here:
-
-  ```
-  src/config/google-credentials.json
-  ```
-* Share your target Google Sheet with the **service account email**
-  (e.g. `sheets-service-account@email-automation-xxxx.iam.gserviceaccount.com`)
-
----
-
-### 5️⃣ Prepare Google Sheet
-
-Example format:
-
-| Name           | Email                                       | Status |
-| -------------- | ------------------------------------------- | ------ |
-| HR Manager     | [hr@company.com](mailto:hr@company.com)     |        |
-| Recruiter John | [john@startup.com](mailto:john@startup.com) | Sent   |
-
-* Keep the sheet name as `Sheet1`
-* Update the Sheet ID inside `googleSheetService.js`
-
----
-
-### 6️⃣ Run the Application
-
+## Run
+Production run:
 ```bash
 npm start
 ```
 
-The script will:
-
-* Fetch all users from Google Sheet
-* Skip already sent entries
-* Generate a unique subject + email using Gemini
-* Send it via Gmail with resume
-* Update Google Sheet status automatically
-
----
-
-## 🧩 Tech Stack
-
-| Technology            | Purpose                  |
-| --------------------- | ------------------------ |
-| **Node.js**           | Backend runtime          |
-| **Nodemailer**        | Sending emails via Gmail |
-| **Google Gemini AI**  | AI text generation       |
-| **Google Sheets API** | Read/write contact data  |
-| **dotenv**            | Secure config handling   |
-| **fs / path**         | Local data persistence   |
-
----
-
-## 📜 Example AI-Generated Email (Preview)
-
-> *Dear HR,*
-> 
-> I am Anand Shukla, a final-year B.Tech student at IIIT Nagpur, with hands-on experience in Node.js, Express.js, MongoDB, and REST APIs.
-> During my internship at BrandX, I optimized backend authentication and API performance.
-> My key projects include CodeSavantAI (LangChain + Gemini) and MealStack (secure backend architecture).
-> 
-> I’d be delighted to bring my skills and curiosity to your development team.
-> 
-> Thank you for your time and consideration.
-
----
-
-## 🛡️ Security Checklist
-
-**Do NOT commit these files to GitHub:**
-
-```
-.env
-src/config/google-credentials.json
-data/sentEmails.json
-data/*.pdf
-```
-
-These files should already be listed in `.gitignore`.
-If not, add this:
-
+Development run (auto-reload):
 ```bash
+npm run dev
+```
+
+## Execution Flow
+1. App starts from `index.js`.
+2. Controller fetches sheet rows and filters valid users.
+3. For each recipient:
+   - Check sheet status and local sent-history
+   - Generate subject + email body with Groq
+   - Send email via Nodemailer
+   - Update sheet status (`Sent` or `Failed`)
+   - Persist recipient in `data/sentEmails.json`
+4. Continue until all valid rows are processed.
+
+## Duplicate Protection
+Duplicate prevention happens at two levels:
+- Google Sheet row status (`Sent`)
+- Local store: `data/sentEmails.json` (emails normalized to lowercase)
+
+If `data/sentEmails.json` is missing, it is created automatically.
+
+## Security Checklist
+- Never commit `.env`
+- Never commit `src/config/google-credentials.json`
+- Never commit personal data files from `data/`
+- Rotate keys immediately if exposed
+
+Recommended `.gitignore` entries:
+```gitignore
 node_modules/
 .env
 src/config/google-credentials.json
@@ -183,30 +132,22 @@ data/sentEmails.json
 data/*.pdf
 ```
 
----
+## Troubleshooting
+### `Missing required env var ...`
+One or more required `.env` values are absent.
 
-## 🔮 Future Improvements
+### `Missing Google credentials file ...`
+`src/config/google-credentials.json` is missing or mislocated.
 
-* 🌐 Web dashboard to view sent status & analytics
-* 💬 Custom AI tone selector (Formal, Friendly, etc.)
-* 📦 Email batching with progress bar
-* 🔁 Automated follow-up sequence
+### Gmail authentication errors
+Use a valid App Password (not your Gmail account password).
 
----
+### Google API DNS/network errors
+Check local internet/DNS/firewall/VPN settings.
 
-## 👨‍💻 Author
+## NPM Scripts
+- `npm start`: run with `node index.js`
+- `npm run dev`: run with `nodemon index.js`
 
-**Anand Shukla**
-Backend Developer | Final Year @ IIIT Nagpur
-
-📧 [aanandd9076@gmail.com](mailto:aanandd9076@gmail.com)
-🔗 [Portfolio](https://anand-shukla02.onrender.com)
-💼 [LinkedIn](https://www.linkedin.com/in/aanandd02)
-💻 [GitHub](https://github.com/aanandd02)
-
----
-
-## ⚖️ License
-
-MIT License © 2025 Anand Shukla
-Free to use and modify with attribution.
+## License
+ISC

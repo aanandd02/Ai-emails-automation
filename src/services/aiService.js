@@ -1,8 +1,6 @@
-// src/services/aiService.js
+import { groq } from "../config/groqConfig.js";
 
-import { genAI } from "../config/geminiaiConfig.js";
-
-const MODEL = "gemini-2.5-flash";
+const MODEL = "llama-3.3-70b-versatile";
 
 const STYLES = [
   "confident and concise",
@@ -42,6 +40,7 @@ Do NOT include my name or contact details in the main body.
 Do NOT add 'Sincerely' or any sign-off lines — end exactly at that point.
 Output plain text only.
 `;
+
   const myName = "Anand Shukla";
   const contact = {
     phone: "+91-9076823328",
@@ -51,18 +50,23 @@ Output plain text only.
   };
 
   try {
-    console.log(`🤖 Using Gemini model: ${MODEL}`);
+    console.log(`🤖 Using Groq model: ${MODEL}`);
 
-    const model = genAI.getGenerativeModel({ model: MODEL });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.8,
+      max_tokens: 500,
+    });
 
-    console.log(`✅ Gemini response generated successfully`);
+    const text = completion.choices[0].message.content;
+
+    console.log(`✅ Groq response generated successfully`);
 
     return buildBeautifulTemplate(text, { myName, ...contact });
 
   } catch (error) {
-    console.error("❌ Gemini generation failed:", error.message);
+    console.error("❌ Groq generation failed:", error.message);
     throw new Error("Email content generation failed");
   }
 }

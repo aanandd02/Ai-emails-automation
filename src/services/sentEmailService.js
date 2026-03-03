@@ -1,19 +1,14 @@
-// src/services/sentEmailService.js
 import fs from "fs/promises";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
-// Get project root → always consistent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = path.resolve(__dirname, "../../");
 
-// ✅ Always use single correct path
 const SENT_EMAILS_FILE = path.join(projectRoot, "data", "sentEmails.json");
+const normalize = (email) => email.trim().toLowerCase();
 
-/**
- * 📥 Load all previously sent emails from JSON file (async)
- */
 export async function loadSentEmails() {
   try {
     await fs.access(SENT_EMAILS_FILE);
@@ -26,21 +21,17 @@ export async function loadSentEmails() {
   }
 }
 
-/**
- * 💾 Save a new email address to the sent list
- */
 export async function saveSentEmail(email) {
+  const normalizedEmail = normalize(email);
   const sent = await loadSentEmails();
-  if (!sent.includes(email)) {
-    sent.push(email);
+  if (!sent.includes(normalizedEmail)) {
+    sent.push(normalizedEmail);
     await fs.writeFile(SENT_EMAILS_FILE, JSON.stringify(sent, null, 2), "utf-8");
   }
 }
 
-/**
- * 🔍 Check if an email has already been sent
- */
 export async function isEmailAlreadySent(email) {
+  const normalizedEmail = normalize(email);
   const sent = await loadSentEmails();
-  return sent.includes(email);
+  return sent.includes(normalizedEmail);
 }

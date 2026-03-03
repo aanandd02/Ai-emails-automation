@@ -3,14 +3,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log("📧 GMAIL_USER:", process.env.GMAIL_USER || "❌ missing");
-console.log("🔐 GMAIL_APP_PASS:", process.env.GMAIL_APP_PASS ? "✅ found" : "❌ missing");
+const { GMAIL_USER, GMAIL_APP_PASS } = process.env;
+
+if (!GMAIL_USER || !GMAIL_APP_PASS) {
+  throw new Error("Missing required env vars: GMAIL_USER and/or GMAIL_APP_PASS");
+}
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASS,
+    user: GMAIL_USER,
+    pass: GMAIL_APP_PASS,
   },
 });
 
