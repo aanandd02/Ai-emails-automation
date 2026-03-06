@@ -8,7 +8,7 @@ export async function sendEmailSafely(to, subject, htmlContent) {
 
   const plainText = `${htmlContent.replace(/<[^>]+>/g, "")}
     
-View my resume: https://drive.google.com/file/d/1dqHj0e59CKZQNcpaXIuTdIxhZNoeIa7M/view?usp=sharing`;
+View my resume: https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view`;
 
   try {
     await transporter.sendMail({
