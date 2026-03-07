@@ -1,0 +1,10 @@
+{
+  "name": "ai-email-automation-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "echo 'Frontend is served by backend at http://localhost:3000'",
+    "dev": "echo 'Run backend: cd backend && npm run dev'"
+  }
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Email Automation Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
+
+    <main class="layout">
+      <section class="panel hero">
+        <p class="kicker">AI HR Mailer</p>
+        <h1>Automation Control Center</h1>
+        <p class="subtitle">Start/stop ke saath exact live counting, wait timer aur speed.</p>
+
+        <div class="controls">
+          <button id="startBtn" class="btn btn-primary">Start Automation</button>
+          <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
+        </div>
+
+        <section class="progress-wrap">
+          <div class="progress-top">
+            <span id="progressText" class="mono">0 / 0 processed</span>
+            <span id="progressPct" class="mono">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </section>
+
+        <div class="quick-kpis">
+          <article>
+            <p>Remaining</p>
+            <strong id="remaining">0</strong>
+          </article>
+          <article>
+            <p>Wait Timer</p>
+            <strong id="waitCountdown">--</strong>
+          </article>
+        </div>
+
+        <div class="status-row">
+          <span class="label">Status</span>
+          <span id="statusBadge" class="badge idle">Idle</span>
+        </div>
+        <div class="status-row">
+          <span class="label">Current Email</span>
+          <span id="currentEmail" class="mono">-</span>
+        </div>
+        <div class="status-row">
+          <span class="label">Live Step</span>
+          <span id="liveStep" class="mono">-</span>
+        </div>
+        <div class="status-row">
+          <span class="label">Last Error</span>
+          <span id="lastError" class="mono">-</span>
+        </div>
+      </section>
+
+      <section class="panel stats">
+        <h2>Live Stats</h2>
+        <div class="grid">
+          <article><p>Total Rows</p><strong id="totalRows">0</strong></article>
+          <article><p>Valid Users</p><strong id="validUsers">0</strong></article>
+          <article><p>Processed</p><strong id="processed">0</strong></article>
+          <article><p>Sent</p><strong id="sent">0</strong></article>
+          <article><p>Skipped</p><strong id="skipped">0</strong></article>
+          <article><p>Failed</p><strong id="failed">0</strong></article>
+        </div>
+      </section>
+
+      <section class="panel logs">
+        <div class="logs-header">
+          <h2>Activity Feed</h2>
+          <span class="mono" id="updatedAt">Awaiting updates...</span>
+        </div>
+        <div class="stream-grid">
+          <pre id="logBox" class="log-box"></pre>
+          <section class="sent-stream">
+            <div class="sent-head">
+              <h3>Sent Mails (This Run)</h3>
+              <span id="sentListCount" class="mono">0</span>
+            </div>
+            <ul id="sentList" class="sent-list"></ul>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

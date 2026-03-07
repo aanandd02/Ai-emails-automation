@@ -25,23 +25,23 @@ Automates personalized job or internship outreach emails using:
 ## Project Structure
 ```text
 .
-├── index.js
-├── package.json
-├── src
-│   ├── config
-│   │   ├── groqConfig.js
-│   │   └── mailConfig.js
-│   ├── controllers
-│   │   └── emailController.js
-│   ├── services
-│   │   ├── aiService.js
-│   │   ├── googleSheetService.js
-│   │   ├── mailService.js
-│   │   └── sentEmailService.js
-│   └── utils
-│       └── delay.js
-└── data
-    └── sentEmails.json (auto-created)
+├── backend
+│   ├── index.js
+│   ├── package.json
+│   ├── .env
+│   ├── data
+│   │   └── sentEmails.json
+│   └── src
+│       ├── config
+│       ├── controllers
+│       ├── routes
+│       ├── runner
+│       └── services
+└── frontend
+    ├── index.html
+    ├── styles.css
+    ├── app.js
+    └── package.json
 ```
 
 ## Prerequisites
@@ -52,7 +52,7 @@ Automates personalized job or internship outreach emails using:
 - Google Cloud service account with Sheets API enabled
 
 ## Environment Variables
-Create a `.env` file in project root:
+Create a `.env` file in `backend/`:
 
 ```env
 GMAIL_USER=your_email@gmail.com
@@ -72,9 +72,7 @@ Notes:
 3. Download service account JSON credentials.
 4. Place it at:
 
-```text
-src/config/google-credentials.json
-```
+`backend/src/config/google-credentials.json`
 
 5. Share your target Google Sheet with the service account email.
 6. Ensure sheet format:
@@ -85,41 +83,41 @@ src/config/google-credentials.json
 
 ## Installation
 ```bash
-npm install
+cd backend && npm install
 ```
 
 ## Run
 Production run:
 ```bash
-npm start
+cd backend && npm start
 ```
 
 Development run (auto-reload):
 ```bash
-npm run dev
+cd backend && npm run dev
 ```
 
 ## Execution Flow
-1. App starts from `index.js`.
+1. App starts from `backend/index.js`.
 2. Controller fetches sheet rows and filters valid users.
 3. For each recipient:
    - Check sheet status and local sent-history
    - Generate subject + email body with Groq
    - Send email via Nodemailer
    - Update sheet status (`Sent` or `Failed`)
-   - Persist recipient in `data/sentEmails.json`
+   - Persist recipient in `backend/data/sentEmails.json`
 4. Continue until all valid rows are processed.
 
 ## Duplicate Protection
 Duplicate prevention happens at two levels:
 - Google Sheet row status (`Sent`)
-- Local store: `data/sentEmails.json` (emails normalized to lowercase)
+- Local store: `backend/data/sentEmails.json` (emails normalized to lowercase)
 
-If `data/sentEmails.json` is missing, it is created automatically.
+If `backend/data/sentEmails.json` is missing, it is created automatically.
 
 ## Security Checklist
 - Never commit `.env`
-- Never commit `src/config/google-credentials.json`
+- Never commit `backend/src/config/google-credentials.json`
 - Never commit personal data files from `data/`
 - Rotate keys immediately if exposed
 
@@ -127,9 +125,9 @@ Recommended `.gitignore` entries:
 ```gitignore
 node_modules/
 .env
-src/config/google-credentials.json
-data/sentEmails.json
-data/*.pdf
+backend/src/config/google-credentials.json
+backend/data/sentEmails.json
+backend/data/*.pdf
 ```
 
 ## Troubleshooting
@@ -137,7 +135,7 @@ data/*.pdf
 One or more required `.env` values are absent.
 
 ### `Missing Google credentials file ...`
-`src/config/google-credentials.json` is missing or mislocated.
+`backend/src/config/google-credentials.json` is missing or mislocated.
 
 ### Gmail authentication errors
 Use a valid App Password (not your Gmail account password).
@@ -146,8 +144,8 @@ Use a valid App Password (not your Gmail account password).
 Check local internet/DNS/firewall/VPN settings.
 
 ## NPM Scripts
-- `npm start`: run with `node index.js`
-- `npm run dev`: run with `nodemon index.js`
+- `cd backend && npm start`: run with `node index.js`
+- `cd backend && npm run dev`: run with `nodemon index.js`
 
 ## License
 ISC

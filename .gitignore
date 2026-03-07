@@ -18,3 +18,5 @@ logs/
 
 # Local config or test files
 *.local
+
+backend/src/config/google-credentials.json
