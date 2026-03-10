@@ -1,18 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
-  --bg: #05080f;
-  --panel: rgba(17, 24, 39, 0.75);
-  --panel-strong: rgba(30, 41, 59, 0.85);
+  --bg: #04060f;
+  --panel: linear-gradient(135deg, rgba(18, 35, 64, 0.9), rgba(42, 17, 77, 0.9));
+  --panel-strong: rgba(18, 33, 62, 0.94);
   --text: #f8fafc;
-  --muted: #9fb4ce;
-  --line: rgba(148, 163, 184, 0.25);
-  --accent: #3bc8f6;
-  --accent-2: #9ef0c4;
+  --muted: #a8b8d6;
+  --line: rgba(148, 163, 184, 0.26);
+  --accent: #66e0ff;
+  --accent-2: #cda6ff;
   --danger: #f87171;
   --ok: #34d399;
   --warn: #fbbf24;
-  --card-gradient: linear-gradient(135deg, rgba(59, 200, 246, 0.18), rgba(158, 240, 196, 0.14));
+  --card-gradient: linear-gradient(135deg, rgba(102, 224, 255, 0.18), rgba(205, 166, 255, 0.16));
 }
 
 * {
@@ -24,7 +24,7 @@ body {
   min-height: 100vh;
   font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at 20% 20%, #0b1e35, #05080f 55%);
+  background: radial-gradient(140% 140% at 18% 16%, #1a2f56 0%, #0b1026 45%, #04060f 78%);
   overflow-y: scroll; /* keep scrollbar steady to avoid layout jump */
   overflow-x: hidden;
 }
@@ -32,24 +32,24 @@ body {
 .bg-shape {
   position: fixed;
   border-radius: 999px;
-  filter: blur(60px);
-  opacity: 0.28;
+  filter: blur(70px);
+  opacity: 0.22;
   pointer-events: none;
 }
 
 .bg-shape-1 {
-  width: 280px;
-  height: 280px;
-  background: #3bc8f6;
-  top: -50px;
-  left: -40px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(102, 224, 255, 0.8), rgba(102, 224, 255, 0));
+  top: -40px;
+  left: -60px;
 }
 
 .bg-shape-2 {
-  width: 220px;
-  height: 220px;
-  background: #9ef0c4;
-  bottom: 10%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(205, 166, 255, 0.8), rgba(205, 166, 255, 0));
+  bottom: 8%;
   right: -40px;
 }
 
@@ -59,6 +59,10 @@ body {
   padding: 12px 0 24px;
   display: grid;
   gap: 14px;
+  grid-template-columns: repeat(12, 1fr);
+  transition: opacity 200ms ease;
+}
+.layout.feed-mode {
   grid-template-columns: repeat(12, 1fr);
 }
 
@@ -135,6 +139,15 @@ body {
   background: rgba(148, 163, 184, 0.1);
 }
 
+.pill-action {
+  border-color: rgba(59, 200, 246, 0.4);
+  background: rgba(59, 200, 246, 0.14);
+  cursor: pointer;
+}
+.pill-action:hover {
+  transform: translateY(-1px);
+}
+
 .pill-ghost {
   cursor: pointer;
   transition: transform 140ms ease, opacity 140ms ease;
@@ -153,33 +166,50 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+.panel,
+.topbar,
+.auth-card,
+.log-box,
+.sent-stream,
+.grid article {
+  transition: box-shadow 200ms ease, border-color 200ms ease, background 200ms ease, color 200ms ease;
+}
+.panel:hover,
+.grid article:hover {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
 }
 
 .hero {
   grid-column: span 7;
   padding: 22px;
-  animation: rise 450ms ease-out;
   min-height: 0;
+  min-height: 360px;
 }
 
 .stats {
   grid-column: span 5;
   padding: 22px;
-  animation: rise 550ms ease-out;
   min-height: 0;
+  min-height: 260px;
 }
 
 .logs {
   grid-column: span 12;
   padding: 20px;
-  animation: rise 650ms ease-out;
   min-height: 0;
+  width: 100%;
 }
 
 .panel-content {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+.slide-in {
+  animation: slideIn 260ms ease-out;
 }
 
 .auth-layout {
@@ -273,6 +303,7 @@ h2 {
   border: none;
   border-radius: 12px;
   padding: 10px 16px;
+  min-width: 140px;
   color: white;
   cursor: pointer;
   transition: transform 140ms ease, opacity 140ms ease;
@@ -307,6 +338,7 @@ h2 {
   gap: 14px;
   padding: 10px 0;
   border-bottom: 1px solid rgba(166, 198, 221, 0.15);
+  transition: color 200ms ease, border-color 200ms ease;
 }
 
 .status-row:last-child {
@@ -318,11 +350,12 @@ h2 {
 }
 
 .progress-wrap {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   padding: 12px;
   background: rgba(4, 18, 30, 0.6);
   border: 1px solid var(--line);
   border-radius: 12px;
+  min-height: 64px;
 }
 
 .progress-top {
@@ -343,7 +376,7 @@ h2 {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, #22c55e, #0ea5a5, #f59e0b);
-  transition: width 260ms ease;
+  transition: width 420ms ease, background 280ms ease;
 }
 
 .quick-kpis {
@@ -442,9 +475,13 @@ h2 {
   gap: 12px;
 }
 
+.feed-mode .logs {
+  animation: slideIn 260ms ease-out;
+}
+
 .log-box {
   margin: 0;
-  height: 320px;
+  height: 380px;
   overflow-y: auto;
   background: rgba(7, 17, 29, 0.85);
   border: 1px solid var(--line);
@@ -462,7 +499,7 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px;
-  height: 320px;
+  height: 380px;
   overflow-y: auto;
 }
 
@@ -508,6 +545,17 @@ h2 {
   from {
     opacity: 0;
     transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
   to {
     opacity: 1;

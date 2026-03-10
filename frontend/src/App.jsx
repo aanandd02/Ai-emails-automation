@@ -48,6 +48,7 @@ function App() {
   const [token, setToken] = useState(() => localStorage.getItem("authToken") || "");
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
 
   const isAuthed = Boolean(token);
 
@@ -425,100 +426,116 @@ function App() {
             <span className={`pill ${appState.isRunning ? "pill-live" : "pill-idle"}`}>
               {appState.isRunning ? "Live" : "Idle"}
             </span>
+            {!showActivity && (
+              <button className="pill pill-action" onClick={() => setShowActivity(true)}>
+                Activity Feed
+              </button>
+            )}
+            {showActivity && (
+              <button className="pill pill-ghost" onClick={() => setShowActivity(false)}>
+                Back to Dashboard
+              </button>
+            )}
             <button className="pill pill-ghost" onClick={handleLogout}>Logout</button>
           </div>
         </header>
 
-        <main className="layout">
-          <section className="panel hero">
-            <p className="kicker">Control</p>
-            <h2>Run the email automations</h2>
-            <p className="subtitle">Start/stop ke saath live progress, queue health, aur wait timer.</p>
+        <main className={`layout ${showActivity ? "feed-mode" : ""}`}>
+          {!showActivity && (
+            <>
+              <section className="panel hero">
+                <p className="kicker">Control</p>
+                <h2>Run the email automations</h2>
+                <p className="subtitle">Start/stop ke saath live progress, queue health, aur wait timer.</p>
 
-            <div className="controls">
-              <button className="btn btn-primary" onClick={handleStart} disabled={appState.isRunning}>
-                Start Automation
-              </button>
-              <button className="btn btn-danger" onClick={handleStop} disabled={!appState.isRunning}>
-                Stop
-              </button>
-            </div>
+                <div className="controls">
+                  <button className="btn btn-primary" onClick={handleStart} disabled={appState.isRunning}>
+                    Start Automation
+                  </button>
+                  <button className="btn btn-danger" onClick={handleStop} disabled={!appState.isRunning}>
+                    Stop
+                  </button>
+                </div>
 
-            <section className="progress-wrap">
-              <div className="progress-top">
-                <span className="mono">{progress.processed} / {progress.total} processed</span>
-                <span className="mono">{progress.pct.toFixed(1)}%</span>
+                <section className="progress-wrap">
+                  <div className="progress-top">
+                    <span className="mono">{progress.processed} / {progress.total} processed</span>
+                    <span className="mono">{progress.pct.toFixed(1)}%</span>
+                  </div>
+                  <div className="progress-track">
+                    <div className="progress-fill" style={{ width: `${progress.pct.toFixed(1)}%` }} />
+                  </div>
+                </section>
+
+                <div className="quick-kpis">
+                  <article>
+                    <p>Remaining</p>
+                    <strong>{progress.remaining}</strong>
+                  </article>
+                  <article>
+                    <p>Wait Timer</p>
+                    <strong>{waitLabel}</strong>
+                  </article>
+                  <article>
+                    <p>Current Email</p>
+                    <strong className="mono">{appState.currentEmail || "-"}</strong>
+                  </article>
+                  <article>
+                    <p>Live Step</p>
+                    <strong className="mono">{appState.liveStep || "-"}</strong>
+                  </article>
+                </div>
+
+                <div className="status-row">
+                  <span className="label">Status</span>
+                  <span className={badgeClass(appState)}>{appState.lastError ? "Error" : appState.isRunning ? (appState.stopRequested ? "Stopping" : "Running") : "Idle"}</span>
+                </div>
+                <div className="status-row">
+                  <span className="label">Last Error</span>
+                  <span className="mono">{appState.lastError || "-"}</span>
+                </div>
+              </section>
+
+              <section className="panel stats">
+                <div className="panel-head">
+                  <h3>Run Snapshot</h3>
+                  <span className="mono">{updatedAt}</span>
+                </div>
+                <div className="grid panel-content">
+                  <article><p>Total Rows</p><strong>{appState.stats.totalRows}</strong></article>
+                  <article><p>Valid Users</p><strong>{appState.stats.validUsers}</strong></article>
+                  <article><p>Processed</p><strong>{appState.stats.processed}</strong></article>
+                  <article><p>Sent</p><strong>{appState.stats.sent}</strong></article>
+                  <article><p>Skipped</p><strong>{appState.stats.skipped}</strong></article>
+                  <article><p>Failed</p><strong>{appState.stats.failed}</strong></article>
+                </div>
+              </section>
+            </>
+          )}
+
+          {showActivity && (
+            <section className="panel logs slide-in">
+              <div className="logs-header">
+                <h2>Activity Feed</h2>
+                <span className="mono">{updatedAt}</span>
               </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${progress.pct.toFixed(1)}%` }} />
+              <div className="stream-grid panel-content">
+                <pre className="log-box">{logs.length ? logs.join("\n") : "No logs yet."}</pre>
+                <section className="sent-stream">
+                  <div className="sent-head">
+                    <h3>Sent Mails (This Run)</h3>
+                    <span className="mono">{sentItems.length}</span>
+                  </div>
+                  <ul className="sent-list">
+                    {sentItems.length === 0 && <li>No sent mail yet.</li>}
+                    {sentItems.map((item) => (
+                      <li key={item.email + item.timestamp}>[{formatTime(item.timestamp)}] {item.email}</li>
+                    ))}
+                  </ul>
+                </section>
               </div>
             </section>
-
-            <div className="quick-kpis">
-              <article>
-                <p>Remaining</p>
-                <strong>{progress.remaining}</strong>
-              </article>
-              <article>
-                <p>Wait Timer</p>
-                <strong>{waitLabel}</strong>
-              </article>
-              <article>
-                <p>Current Email</p>
-                <strong className="mono">{appState.currentEmail || "-"}</strong>
-              </article>
-              <article>
-                <p>Live Step</p>
-                <strong className="mono">{appState.liveStep || "-"}</strong>
-              </article>
-            </div>
-
-            <div className="status-row">
-              <span className="label">Status</span>
-              <span className={badgeClass(appState)}>{appState.lastError ? "Error" : appState.isRunning ? (appState.stopRequested ? "Stopping" : "Running") : "Idle"}</span>
-            </div>
-            <div className="status-row">
-              <span className="label">Last Error</span>
-              <span className="mono">{appState.lastError || "-"}</span>
-            </div>
-          </section>
-
-        <section className="panel stats">
-          <div className="panel-head">
-            <h3>Run Snapshot</h3>
-            <span className="mono">{updatedAt}</span>
-          </div>
-          <div className="grid panel-content">
-            <article><p>Total Rows</p><strong>{appState.stats.totalRows}</strong></article>
-            <article><p>Valid Users</p><strong>{appState.stats.validUsers}</strong></article>
-            <article><p>Processed</p><strong>{appState.stats.processed}</strong></article>
-            <article><p>Sent</p><strong>{appState.stats.sent}</strong></article>
-            <article><p>Skipped</p><strong>{appState.stats.skipped}</strong></article>
-            <article><p>Failed</p><strong>{appState.stats.failed}</strong></article>
-          </div>
-        </section>
-
-        <section className="panel logs">
-          <div className="logs-header">
-            <h2>Activity Feed</h2>
-            <span className="mono">{updatedAt}</span>
-          </div>
-          <div className="stream-grid panel-content">
-            <pre className="log-box">{logs.length ? logs.join("\n") : "No logs yet."}</pre>
-            <section className="sent-stream">
-              <div className="sent-head">
-                <h3>Sent Mails (This Run)</h3>
-                <span className="mono">{sentItems.length}</span>
-                </div>
-                <ul className="sent-list">
-                  {sentItems.length === 0 && <li>No sent mail yet.</li>}
-                  {sentItems.map((item) => (
-                    <li key={item.email + item.timestamp}>[{formatTime(item.timestamp)}] {item.email}</li>
-                  ))}
-                </ul>
-              </section>
-            </div>
-          </section>
+          )}
         </main>
       </div>
     </>
