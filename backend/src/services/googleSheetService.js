@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import logger from "../utils/logger.js";
 
 dotenv.config();
 
@@ -55,5 +56,5 @@ export async function updateStatusInGoogleSheet(rowIndex, status) {
       values: [[status]],
     },
   });
-  console.log(`📝 Sheet updated → Row ${rowIndex}, Status: ${status}`);
+  logger.info(`📝 Sheet updated → Row ${rowIndex}, Status: ${status}`);
 }

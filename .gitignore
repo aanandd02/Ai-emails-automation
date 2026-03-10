@@ -1,22 +1,25 @@
-# Node dependencies
+# Node / build
 node_modules/
-
-# Environment variables
-.env
-
-# Google credentials file
-src/config/google-credentials.json
-
-# Personal data files
-data/sentEmails.json
-data/*.pdf
-
-# Logs and temp files
+dist/
 *.log
-logs/
-.DS_Store
 
-# Local config or test files
-*.local
-
+# Env & secrets
+.env
+backend/.env
+frontend/.env
 backend/src/config/google-credentials.json
+
+# Data
+backend/data/sentEmails.json
+backend/data/*.json
+backend/data/*.csv
+backend/data/*.pdf
+
+# Vite / frontend
+frontend/dist/
+.vite
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo

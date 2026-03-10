@@ -13,13 +13,12 @@
   "author": "Anand Shukla",
   "license": "ISC",
   "dependencies": {
-    "@google/genai": "^1.21.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "googleapis": "^165.0.0",
     "groq-sdk": "^0.37.0",
-    "nodemailer": "^7.0.6",
-    "xlsx": "^0.18.5"
+    "cors": "^2.8.5",
+    "nodemailer": "^7.0.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

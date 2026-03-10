@@ -1,4 +1,5 @@
 import { groq } from "../config/groqConfig.js";
+import logger from "../utils/logger.js";
 
 const MODEL = "llama-3.3-70b-versatile";
 
@@ -59,11 +60,11 @@ Output an HTML fragment only (body text with <b> tags, no wrapping html/body/hea
     portfolio: "https://anand-shukla02.onrender.com/",
     linkedin: "https://www.linkedin.com/in/aanandd02",
     resume:
-      "https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view",
+      "https://drive.google.com/file/d/16njcwPjtBjIbA6eycBdHgqXWgik4kd4K/view?usp=sharing",
   };
 
   try {
-    console.log(`🤖 Using Groq model: ${MODEL}`);
+    logger.info(`🤖 Using Groq model: ${MODEL}`);
 
     const completion = await groq.chat.completions.create({
       model: MODEL,
@@ -73,11 +74,11 @@ Output an HTML fragment only (body text with <b> tags, no wrapping html/body/hea
     });
 
     const text = completion.choices[0].message.content;
-    console.log(`✅ Groq response generated successfully`);
+    logger.info(`✅ Groq response generated successfully`);
 
     return buildBeautifulTemplate(text, { myName, ...contact });
   } catch (error) {
-    console.error("❌ Groq generation failed:", error.message);
+    logger.error("❌ Groq generation failed:", error.message);
     throw new Error("Email content generation failed");
   }
 }

@@ -1,67 +1,36 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { spawn } from "child_process";
+import cors from "cors";
 import automationRoutes from "./src/routes/automationRoutes.js";
-
-dotenv.config();
+import logger from "./src/utils/logger.js";
+import { loginHandler, logoutHandler, requireAuth } from "./src/middleware/auth.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const publicDir = path.join(__dirname, "..", "frontend");
+// Frontend origin(s) allowed for CORS
+const allowedOrigins = ["http://localhost:5173"];
 
-app.use(express.json());
 app.use(
-  express.static(publicDir, {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".js") || filePath.endsWith(".css") || filePath.endsWith(".html")) {
-        res.setHeader("Cache-Control", "no-store");
-      }
-    },
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
   }),
 );
 
-app.use("/api", automationRoutes);
+app.use(express.json());
+
+// Public auth endpoints
+app.post("/api/login", loginHandler);
+app.post("/api/logout", logoutHandler);
+
+// Protected automation APIs
+app.use("/api", requireAuth, automationRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-app.use((_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  res.sendFile(path.join(publicDir, "index.html"));
-});
-
 app.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
-  console.log(`Dashboard running at ${url}`);
-  autoOpenDashboard(url);
+  logger.info(`API server running on http://localhost:${PORT}`);
 });
-
-function autoOpenDashboard(url) {
-  if (process.env.AUTO_OPEN_DASHBOARD === "false") {
-    return;
-  }
-
-  let command;
-  let args = [];
-
-  if (process.platform === "darwin") {
-    command = "open";
-    args = [url];
-  } else if (process.platform === "win32") {
-    command = "cmd";
-    args = ["/c", "start", "", url];
-  } else {
-    command = "xdg-open";
-    args = [url];
-  }
-
-  const child = spawn(command, args, { stdio: "ignore", detached: true });
-  child.on("error", () => {});
-  child.unref();
-}
