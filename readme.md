@@ -44,14 +44,13 @@ Use the BASIC_AUTH_USER / BASIC_AUTH_PASS you set in `backend/.env`.
 
 ## How it works
 1. Reads rows from Google Sheet (A:C).  
-2. Skips already-sent rows and local duplicates (`backend/data/sentEmails.json`).  
+2. Skips rows whose sheet status is `Sent`.  
 3. Groq generates subject + HTML body.  
 4. Sends via Gmail App Password.  
-5. Updates sheet status to `Sent` or `Failed`, records locally, waits with human-like delays.  
+5. Updates sheet status to `Sent` or `Failed`, waits with human-like delays.  
 
 ## Duplicate protection
-- Sheet status `Sent`  
-- Local store `backend/data/sentEmails.json` (auto-created)
+- Sheet status `Sent`
 
 ## Security
 - Do not commit `.env`, credentials, or data exports.

@@ -1,6 +1,5 @@
 import { generateEmail, generateUniqueSubject } from "../services/aiService.js";
 import { sendEmailSafely, waitWithCountdown } from "../services/mailService.js";
-import { isEmailAlreadySent } from "../services/sentEmailService.js";
 import {
   readGoogleSheetData,
   updateStatusInGoogleSheet,
@@ -91,8 +90,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       const { name, email, status, rowNumber } = validUsers[i];
       const position = i + 1;
 
-      const alreadySent =
-        status?.toLowerCase() === "sent" || (await isEmailAlreadySent(email));
+      const alreadySent = status?.toLowerCase() === "sent";
 
       if (alreadySent) {
         stats.skipped += 1;

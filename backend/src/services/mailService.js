@@ -1,16 +1,7 @@
 import transporter from "../config/mailConfig.js";
-import { isEmailAlreadySent, saveSentEmail } from "./sentEmailService.js";
 
 export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
   const { onEvent } = options;
-
-  if (await isEmailAlreadySent(to)) {
-    onEvent?.({
-      level: "info",
-      message: `Skipping already sent email: ${to}`,
-    });
-    return { sent: false, waitSeconds: 0 };
-  }
 
   const plainText = `${htmlContent.replace(/<[^>]+>/g, "")}
     
@@ -34,8 +25,6 @@ View my resume: https://drive.google.com/file/d/16njcwPjtBjIbA6eycBdHgqXWgik4kd4
     level: "success",
     message: `Email sent successfully to ${to}. Waiting ${seconds}s before next send.`,
   });
-
-  await saveSentEmail(to);
 
   return { sent: true, waitSeconds: seconds };
 }
