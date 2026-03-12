@@ -27,7 +27,7 @@ export async function generateEmail(recipientName = "") {
   const greeting = recipientName ? `Dear ${recipientName},` : "Dear HR,";
 
   const prompt = `
-Write a short 100-word cold email applying for a full-time Software Development Engineer (SDE) role.
+Write a short 80-word cold email applying for a full-time Software Development Engineer (SDE) role.
 Do NOT mention any job platform, advertisement, or where I found the job.
 Do NOT mention any projects.
 Tone: ${style}.
@@ -60,7 +60,7 @@ Output an HTML fragment only (body text with <b> tags, no wrapping html/body/hea
     portfolio: "https://anand-shukla02.onrender.com/",
     linkedin: "https://www.linkedin.com/in/aanandd02",
     resume:
-      "https://drive.google.com/file/d/16njcwPjtBjIbA6eycBdHgqXWgik4kd4K/view?usp=sharing",
+      "https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view?usp=sharing",
   };
 
   try {

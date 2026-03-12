@@ -45,7 +45,9 @@ function App() {
   const [updatedAt, setUpdatedAt] = useState("Awaiting updates...");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState(() => localStorage.getItem("authToken") || "");
+  const [token, setToken] = useState(
+    () => localStorage.getItem("authToken") || "",
+  );
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
@@ -80,9 +82,13 @@ function App() {
 
     const message = event.message || "";
     const isWait = event.level === "wait" || event.stage === "waiting";
-    const isPrepare = event.stage === "preparing" || message.includes("Preparing email for");
-    const isGenerate = event.stage === "generating" || message.includes("Generating content for");
-    const isSkip = message.startsWith("Skipping ") || message.startsWith("Skipped ");
+    const isPrepare =
+      event.stage === "preparing" || message.includes("Preparing email for");
+    const isGenerate =
+      event.stage === "generating" ||
+      message.includes("Generating content for");
+    const isSkip =
+      message.startsWith("Skipping ") || message.startsWith("Skipped ");
     if (isWait || isPrepare || isGenerate || isSkip) return;
 
     const line = `[${formatTime(event.timestamp || new Date().toISOString())}] ${message}`;
@@ -144,13 +150,22 @@ function App() {
 
         const liveTotal = next.total || next.stats.validUsers || 0;
         const livePos = next.position || next.stats.processed || 0;
-        if (event.stage === "preparing" || event.message?.includes("Preparing email for")) {
+        if (
+          event.stage === "preparing" ||
+          event.message?.includes("Preparing email for")
+        ) {
           next.liveStep = `${livePos}/${liveTotal} preparing`;
-        } else if (event.stage === "generating" || event.message?.includes("Generating content for")) {
+        } else if (
+          event.stage === "generating" ||
+          event.message?.includes("Generating content for")
+        ) {
           next.liveStep = `${livePos}/${liveTotal} generating`;
           next.isGenerating = true;
           next.waitSeconds = null;
-        } else if (event.message?.startsWith("Skipping ") || event.message?.startsWith("Skipped ")) {
+        } else if (
+          event.message?.startsWith("Skipping ") ||
+          event.message?.startsWith("Skipped ")
+        ) {
           next.liveStep = `${livePos}/${liveTotal} skipped`;
         } else if (event.stage === "waiting" || event.level === "wait") {
           next.liveStep = `${livePos}/${liveTotal} waiting`;
@@ -189,7 +204,11 @@ function App() {
           next.stopRequested = true;
         }
 
-        if (event.phase === "stopped" || event.phase === "completed" || event.phase === "error") {
+        if (
+          event.phase === "stopped" ||
+          event.phase === "completed" ||
+          event.phase === "error"
+        ) {
           next.waitSeconds = null;
           next.isGenerating = false;
           next.isRunning = false;
@@ -235,17 +254,24 @@ function App() {
         applySnapshot(data);
         setUpdatedAt(`Last update: ${formatTime(new Date().toISOString())}`);
       } catch (err) {
-        appendLog({ timestamp: new Date().toISOString(), message: err.message });
+        appendLog({
+          timestamp: new Date().toISOString(),
+          message: err.message,
+        });
       }
     };
 
     loadInitial();
 
-    const stream = new EventSource(`${apiBase}/api/events?token=${encodeURIComponent(token)}`);
+    const stream = new EventSource(
+      `${apiBase}/api/events?token=${encodeURIComponent(token)}`,
+    );
     stream.onmessage = (message) => {
       if (cancelled) return;
       const event = JSON.parse(message.data);
-      setUpdatedAt(`Last update: ${formatTime(event.timestamp || new Date().toISOString())}`);
+      setUpdatedAt(
+        `Last update: ${formatTime(event.timestamp || new Date().toISOString())}`,
+      );
 
       if (event.type === "snapshot") {
         applySnapshot(event);
@@ -328,7 +354,10 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      if (res.status === 404) throw new Error(`API not reachable at "${apiBase}". Check backend URL/env.`);
+      if (res.status === 404)
+        throw new Error(
+          `API not reachable at "${apiBase}". Check backend URL/env.`,
+        );
       if (res.status === 401) throw new Error("Invalid username or password");
       if (!res.ok) throw new Error("Login failed, try again.");
       const data = await res.json();
@@ -366,7 +395,9 @@ function App() {
           <section className="auth-card">
             <p className="kicker">AI HR Mailer</p>
             <h1>Login Required</h1>
-            <p className="subtitle">Enter your username and password to continue.</p>
+            <p className="subtitle">
+              Enter your username and password to continue.
+            </p>
             <form className="auth-form" onSubmit={handleLogin}>
               <label>
                 <span>Username</span>
@@ -376,7 +407,7 @@ function App() {
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
                   required
-                  />
+                />
               </label>
               <label>
                 <span>Password</span>
@@ -393,14 +424,18 @@ function App() {
                     type="button"
                     className="show-btn"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
               </label>
               {authError && <div className="auth-error">{authError}</div>}
-              <button className="btn btn-primary" type="submit">Login</button>
+              <button className="btn btn-primary" type="submit">
+                Login
+              </button>
             </form>
           </section>
         </main>
@@ -423,20 +458,30 @@ function App() {
             </div>
           </div>
           <div className="session">
-            <span className={`pill ${appState.isRunning ? "pill-live" : "pill-idle"}`}>
+            <span
+              className={`pill ${appState.isRunning ? "pill-live" : "pill-idle"}`}
+            >
               {appState.isRunning ? "Live" : "Idle"}
             </span>
             {!showActivity && (
-              <button className="pill pill-action" onClick={() => setShowActivity(true)}>
+              <button
+                className="pill pill-action"
+                onClick={() => setShowActivity(true)}
+              >
                 Activity Feed
               </button>
             )}
             {showActivity && (
-              <button className="pill pill-ghost" onClick={() => setShowActivity(false)}>
+              <button
+                className="pill pill-ghost"
+                onClick={() => setShowActivity(false)}
+              >
                 Back to Dashboard
               </button>
             )}
-            <button className="pill pill-ghost" onClick={handleLogout}>Logout</button>
+            <button className="pill pill-ghost" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </header>
 
@@ -446,24 +491,40 @@ function App() {
               <section className="panel hero">
                 <p className="kicker">Control</p>
                 <h2>Run the email automations</h2>
-                <p className="subtitle">Start/stop ke saath live progress, queue health, aur wait timer.</p>
+                <p className="subtitle">
+                  Start/stop ke saath live progress, queue health, aur wait
+                  timer.
+                </p>
 
                 <div className="controls">
-                  <button className="btn btn-primary" onClick={handleStart} disabled={appState.isRunning}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleStart}
+                    disabled={appState.isRunning}
+                  >
                     Start Automation
                   </button>
-                  <button className="btn btn-danger" onClick={handleStop} disabled={!appState.isRunning}>
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleStop}
+                    disabled={!appState.isRunning}
+                  >
                     Stop
                   </button>
                 </div>
 
                 <section className="progress-wrap">
                   <div className="progress-top">
-                    <span className="mono">{progress.processed} / {progress.total} processed</span>
+                    <span className="mono">
+                      {progress.processed} / {progress.total} processed
+                    </span>
                     <span className="mono">{progress.pct.toFixed(1)}%</span>
                   </div>
                   <div className="progress-track">
-                    <div className="progress-fill" style={{ width: `${progress.pct.toFixed(1)}%` }} />
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${progress.pct.toFixed(1)}%` }}
+                    />
                   </div>
                 </section>
 
@@ -478,7 +539,9 @@ function App() {
                   </article>
                   <article>
                     <p>Current Email</p>
-                    <strong className="mono">{appState.currentEmail || "-"}</strong>
+                    <strong className="mono">
+                      {appState.currentEmail || "-"}
+                    </strong>
                   </article>
                   <article>
                     <p>Live Step</p>
@@ -488,7 +551,15 @@ function App() {
 
                 <div className="status-row">
                   <span className="label">Status</span>
-                  <span className={badgeClass(appState)}>{appState.lastError ? "Error" : appState.isRunning ? (appState.stopRequested ? "Stopping" : "Running") : "Idle"}</span>
+                  <span className={badgeClass(appState)}>
+                    {appState.lastError
+                      ? "Error"
+                      : appState.isRunning
+                        ? appState.stopRequested
+                          ? "Stopping"
+                          : "Running"
+                        : "Idle"}
+                  </span>
                 </div>
                 <div className="status-row">
                   <span className="label">Last Error</span>
@@ -502,12 +573,30 @@ function App() {
                   <span className="mono">{updatedAt}</span>
                 </div>
                 <div className="grid panel-content">
-                  <article><p>Total Rows</p><strong>{appState.stats.totalRows}</strong></article>
-                  <article><p>Valid Users</p><strong>{appState.stats.validUsers}</strong></article>
-                  <article><p>Processed</p><strong>{appState.stats.processed}</strong></article>
-                  <article><p>Sent</p><strong>{appState.stats.sent}</strong></article>
-                  <article><p>Skipped</p><strong>{appState.stats.skipped}</strong></article>
-                  <article><p>Failed</p><strong>{appState.stats.failed}</strong></article>
+                  <article>
+                    <p>Total Rows</p>
+                    <strong>{appState.stats.totalRows}</strong>
+                  </article>
+                  <article>
+                    <p>Valid Users</p>
+                    <strong>{appState.stats.validUsers}</strong>
+                  </article>
+                  <article>
+                    <p>Processed</p>
+                    <strong>{appState.stats.processed}</strong>
+                  </article>
+                  <article>
+                    <p>Sent</p>
+                    <strong>{appState.stats.sent}</strong>
+                  </article>
+                  <article>
+                    <p>Skipped</p>
+                    <strong>{appState.stats.skipped}</strong>
+                  </article>
+                  <article>
+                    <p>Failed</p>
+                    <strong>{appState.stats.failed}</strong>
+                  </article>
                 </div>
               </section>
             </>
@@ -520,7 +609,9 @@ function App() {
                 <span className="mono">{updatedAt}</span>
               </div>
               <div className="stream-grid panel-content">
-                <pre className="log-box">{logs.length ? logs.join("\n") : "No logs yet."}</pre>
+                <pre className="log-box">
+                  {logs.length ? logs.join("\n") : "No logs yet."}
+                </pre>
                 <section className="sent-stream">
                   <div className="sent-head">
                     <h3>Sent Mails (This Run)</h3>
@@ -529,7 +620,9 @@ function App() {
                   <ul className="sent-list">
                     {sentItems.length === 0 && <li>No sent mail yet.</li>}
                     {sentItems.map((item) => (
-                      <li key={item.email + item.timestamp}>[{formatTime(item.timestamp)}] {item.email}</li>
+                      <li key={item.email + item.timestamp}>
+                        [{formatTime(item.timestamp)}] {item.email}
+                      </li>
                     ))}
                   </ul>
                 </section>
