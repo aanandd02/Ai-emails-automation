@@ -26,50 +26,42 @@ export async function generateEmail(recipientName = "") {
   const style = STYLES[Math.floor(Math.random() * STYLES.length)];
   const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
   const nameContext = recipientName
-    ? `The recipient's name is ${recipientName}. Address them naturally if it fits the tone.`
-    : "No recipient name provided. Use a general tone.";
+    ? `The recipient's name is ${recipientName}. The greeting "Hi ${recipientName}," is already added — do NOT use their name anywhere inside the email body.`
+    : "No recipient name provided. Use a general but professional tone.";
 
   const prompt = `
-Write a HIGH-RESPONSE generalised cold email body in MAX 65 WORDS applying for a full-time Software Development Engineer (SDE-1) role.
+Write a SHORT, PROFESSIONAL cold email body (MAX 80 WORDS) for a Software Development Engineer (SDE-1) job application.
 
-Rules:
-- Maximum 65 words
-- Natural human tone, no buzzwords
-- 3–4 sentences only
-- Combine BOTH: mention LeetCode Knight (top 2.44% globally, rating 2006) AND one real internship achievement
-- Do NOT repeat the greeting — it is already added separately
-- Do NOT mention any specific company name the email is being sent to
-- Do NOT mention notice period or joining timeline
-- Do NOT mention projects
-- Do NOT mention job platforms
-- Do NOT add sign-offs
-- End with exactly: "Resume attached for your reference. I'd appreciate the chance to connect."
+Follow this structure:
+Sentence 1 — Intro: Start with "I'm Anand, a final-year ECE student at IIIT Nagpur" and mention LeetCode Knight (top 2.44% globally, rating 2006).
+Sentence 2 & 3 — Work Experience: Highlight your Backend Internship experience at <b>Synup</b> and/or <b>BrandX</b>. Mention specific roles like "Backend Engineer Intern" and include high-impact tech (AWS Lambda, MySQL, Node.js, MongoDB).
+Sentence 4 — Closing: A short, natural sentence expressing interest in connecting for SDE-1 opportunities. The resume and portfolio are already linked in the signature.
+
+Hard Rules:
+- CRITICAL: Do NOT start with "Hi", "Hello", or any greeting — greeting is already added above this body
+- Do NOT write "I'm Anand Shukla" — use only "I'm Anand"
+- Do NOT mention any specific company being applied to
+- Mention <b>Synup</b> and <b>BrandX</b> prominently if possible.
+- Use <b> tags for company names.
+- Keep it flowy and human, not like a template.
 - Tone: ${style}
 - ${nameContext}
 
-Candidate Background:
-Name: Anand Shukla
-Final Year B.Tech ECE at IIIT Nagpur
-LeetCode Knight — Rating 2006, Top 2.44% globally, 400+ problems solved
+Detailed Work Experience for Reference:
 
-Work Experience:
+1. **Synup** (Backend Engineer Intern | 6 months):
+   - Tracked and fixed production race conditions in event-driven AWS Lambda pipelines.
+   - Optimized MySQL transactions for high-concurrency services.
+   - Key Achievement: Reduced pipeline failure rate by 40%.
 
-Synup (Backend Engineer Intern):
-- Built serverless microservices using AWS Lambda, MySQL, Elasticsearch
-- Resolved a critical production race condition across concurrent Lambda services
-- Reduced pipeline failures by ~40% in a distributed event-driven system
+2. **BrandX** (Backend Developer Intern):
+   - Built atomic reservation logic for a high-traffic booking platform (Kumbh Mela project).
+   - Tech: Node.js, MongoDB, REST APIs.
+   - Key Achievement: Improved API response times by 35% under peak load.
 
-BrandX (Backend Developer Intern):
-- Built concurrent-safe booking system using Node.js and MongoDB
-- Implemented atomic reservation logic preventing double bookings
-- Reduced API response latency by ~35% under peak traffic
-
-Tech Stack: Java, Node.js, Express.js, REST APIs, AWS Lambda, DynamoDB, MySQL, MongoDB
-
-Formatting:
-- Use <b> tags for company names: <b>Synup</b> or <b>BrandX</b>
-- Output HTML fragment only — no markdown, no backticks, no extra commentary
+Output only the email body plain HTML fragment — no markdown, no backticks, no commentary.
 `;
+
 
   const myName = "Anand Shukla";
 
@@ -97,7 +89,7 @@ Formatting:
     logger.info("✅ Email generated");
 
     return {
-      subject: await generateUniqueSubject(),
+      subject: SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
       html: buildBeautifulTemplate(greeting, text, { myName, ...contact }),
     };
   } catch (error) {
@@ -139,36 +131,26 @@ function buildBeautifulTemplate(
     ${body}
   </div>
 
-  <!-- Divider -->
-  <hr style="margin:20px 0;border:none;border-top:1px solid #e5e5e5;" />
-
-  <!-- Name -->
-  <div style="font-size:15px;color:#111;font-weight:600;">
-    ${myName}
-  </div>
-
-  <!-- Title -->
-  <div style="font-size:13px;color:#666;margin-top:2px;">
-    Software Development Engineer &nbsp;·&nbsp; IIIT Nagpur
-  </div>
-
-  <!-- Contact -->
-  <div style="margin-top:8px;font-size:13px;color:#444;line-height:1.8;">
-    <a href="tel:${phone}" style="color:#444;text-decoration:none;">${phone}</a><br />
-    <a href="mailto:${email}" style="color:#444;text-decoration:none;">${email}</a>
-  </div>
-
-  <!-- CTA Buttons -->
-  <div style="margin-top:14px;">
-    <a href="${portfolio}"
-      style="display:inline-block;padding:7px 14px;margin-right:8px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:5px;font-size:12px;font-weight:500;">
-      Portfolio
-    </a>
-    <a href="${resume}"
-      style="display:inline-block;padding:7px 14px;background:#0a66c2;color:#ffffff;text-decoration:none;border-radius:5px;font-size:12px;font-weight:500;">
-      Resume
-    </a>
-  </div>
+  <!-- Signature -->
+  <table style="margin-top:20px;padding-top:16px;border-top:1px solid #e8e8e8;width:100%;border-collapse:collapse;">
+    <tr>
+      <td style="width:44px;vertical-align:middle;padding-right:12px;">
+        <table style="border-collapse:collapse;"><tr><td style="width:40px;height:40px;border-radius:50%;background:#dbeafe;text-align:center;vertical-align:middle;font-size:13px;font-weight:700;color:#1d4ed8;letter-spacing:0.5px;line-height:40px;">AS</td></tr></table>
+      </td>
+      <td style="vertical-align:middle;">
+        <div style="font-size:14px;font-weight:600;color:#111;line-height:1.4;">${myName}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">
+          SDE &nbsp;·&nbsp; IIIT Nagpur &nbsp;|&nbsp;
+          <a href="tel:${phone}" style="color:#888;text-decoration:none;">${phone}</a> &nbsp;|&nbsp;
+          <a href="mailto:${email}" style="color:#888;text-decoration:none;">${email}</a>
+        </div>
+        <div style="margin-top:8px;">
+          <a href="${portfolio}" style="display:inline-block;padding:4px 12px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:4px;font-size:11px;font-weight:500;margin-right:6px;">Portfolio</a>
+          <a href="${resume}" style="display:inline-block;padding:4px 12px;background:#0a66c2;color:#ffffff;text-decoration:none;border-radius:4px;font-size:11px;font-weight:500;">Resume</a>
+        </div>
+      </td>
+    </tr>
+  </table>
 
 </div>
 
