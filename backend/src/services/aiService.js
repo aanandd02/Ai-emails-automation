@@ -10,69 +10,65 @@ const STYLES = [
   "polite and enthusiastic",
 ];
 
-export async function generateUniqueSubject(recipientName = "") {
-  const subjects = [
-    `Software Development Engineer | Notice Period | Anand Shukla`,
-    `SDE Application | Anand Shukla`,
-    `Software Development Engineer | Immediate Joiner`,
-    `SDE Opportunity | Anand Shukla`,
-    `Exploring Software Development Engineer Roles`,
-  ];
+const SUBJECTS = [
+  "SDE-1 Opening | LeetCode Knight (Rating 2006) | AWS & Backend Engineer",
+  "Backend Engineer | LeetCode Knight (Top 2.44%) | AWS Serverless + Node.js",
+  "SDE-1 Application | AWS Lambda · Node.js · LeetCode Knight | Anand Shukla",
+  "Software Development Engineer | LeetCode Knight (2006) | IIIT Nagpur",
+  "SDE-1 Role | Serverless Microservices · Node.js · MongoDB | Anand Shukla",
+];
 
-  return subjects[Math.floor(Math.random() * subjects.length)];
+export async function generateUniqueSubject() {
+  return SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
 }
 
 export async function generateEmail(recipientName = "") {
   const style = STYLES[Math.floor(Math.random() * STYLES.length)];
-  const greeting = recipientName ? `Dear ${recipientName},` : "Hello,";
+  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
+  const nameContext = recipientName
+    ? `The recipient's name is ${recipientName}. Address them naturally if it fits the tone.`
+    : "No recipient name provided. Use a general tone.";
 
   const prompt = `
-Write a HIGH-RESPONSE cold email in **MAX 60 WORDS** applying for a full-time Software Development Engineer (SDE) role.
+Write a HIGH-RESPONSE generalised cold email body in MAX 65 WORDS applying for a full-time Software Development Engineer (SDE-1) role.
 
 Rules:
-- Maximum 60 words
-- Natural human tone
+- Maximum 65 words
+- Natural human tone, no buzzwords
 - 3–4 sentences only
-- Mention ONE achievement from <b>Synup</b> and ONE from <b>BrandX</b>
-- Mention that I am currently serving my notice period
-- Indicate availability to join soon
-- Express interest in a Software Development Engineer (SDE) role
-- End with: "Resume attached for your reference. I'd appreciate the chance to connect."
+- Combine BOTH: mention LeetCode Knight (top 2.44% globally, rating 2006) AND one real internship achievement
+- Do NOT repeat the greeting — it is already added separately
+- Do NOT mention any specific company name the email is being sent to
+- Do NOT mention notice period or joining timeline
 - Do NOT mention projects
 - Do NOT mention job platforms
 - Do NOT add sign-offs
-
-Greeting: "${greeting}"
-Tone: ${style}
+- End with exactly: "Resume attached for your reference. I'd appreciate the chance to connect."
+- Tone: ${style}
+- ${nameContext}
 
 Candidate Background:
 Name: Anand Shukla
-Final Year B.Tech at IIIT Nagpur
+Final Year B.Tech ECE at IIIT Nagpur
+LeetCode Knight — Rating 2006, Top 2.44% globally, 400+ problems solved
 
 Work Experience:
 
-Synup:
-- Backend Engineer Intern
-- Built serverless microservices using AWS Lambda
-- Resolved a production race condition across concurrent services
-- Improved reliability of a distributed data pipeline reducing failures
+Synup (Backend Engineer Intern):
+- Built serverless microservices using AWS Lambda, MySQL, Elasticsearch
+- Resolved a critical production race condition across concurrent Lambda services
+- Reduced pipeline failures by ~40% in a distributed event-driven system
 
-BrandX:
-- Backend Developer Intern
-- Built a concurrent booking system using Node.js and MongoDB
+BrandX (Backend Developer Intern):
+- Built concurrent-safe booking system using Node.js and MongoDB
 - Implemented atomic reservation logic preventing double bookings
-- Optimized reservation APIs improving response latency
+- Reduced API response latency by ~35% under peak traffic
 
-Availability:
-- Currently serving notice period
-- Available for full-time Software Development Engineer roles
-
-Tech Stack:
-Java, Node.js, Express.js, REST APIs, AWS Lambda, DynamoDB, MySQL, MongoDB
+Tech Stack: Java, Node.js, Express.js, REST APIs, AWS Lambda, DynamoDB, MySQL, MongoDB
 
 Formatting:
-- Use <b> tags for company names (<b>Synup</b>, <b>BrandX</b>)
-- Output HTML fragment only
+- Use <b> tags for company names: <b>Synup</b> or <b>BrandX</b>
+- Output HTML fragment only — no markdown, no backticks, no extra commentary
 `;
 
   const myName = "Anand Shukla";
@@ -87,19 +83,23 @@ Formatting:
 
   try {
     logger.info(`🤖 Using Groq model: ${MODEL}`);
+    logger.info(`👤 Recipient: ${recipientName || "unknown"}`);
 
     const completion = await groq.chat.completions.create({
       model: MODEL,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 200,
+      temperature: 0.75,
+      max_tokens: 250,
     });
 
     const text = completion.choices[0].message.content;
 
     logger.info("✅ Email generated");
 
-    return buildBeautifulTemplate(text, { myName, ...contact });
+    return {
+      subject: await generateUniqueSubject(),
+      html: buildBeautifulTemplate(greeting, text, { myName, ...contact }),
+    };
   } catch (error) {
     logger.error("❌ Groq generation failed:", error.message);
     throw new Error("Email content generation failed");
@@ -107,6 +107,7 @@ Formatting:
 }
 
 function buildBeautifulTemplate(
+  greeting,
   emailText,
   { myName, phone, email, portfolio, resume }
 ) {
@@ -119,38 +120,52 @@ function buildBeautifulTemplate(
 
   return `
 <!DOCTYPE html>
-<html>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:Segoe UI,Arial,sans-serif">
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Segoe UI,Arial,sans-serif;">
 
-<div style="max-width:620px;margin:auto;background:#ffffff;padding:28px;border-radius:8px">
+<div style="max-width:620px;margin:32px auto;background:#ffffff;padding:32px;border-radius:8px;border:1px solid #e5e5e5;">
 
-  <div style="font-size:15px;line-height:1.7;color:#333">
+  <!-- Personalised Greeting -->
+  <div style="font-size:15px;line-height:1.7;color:#333;margin-bottom:12px;">
+    ${greeting}
+  </div>
+
+  <!-- AI-Generated Body -->
+  <div style="font-size:15px;line-height:1.8;color:#333;margin-bottom:20px;">
     ${body}
   </div>
 
-  <hr style="margin:5px 0;border:none;border-top:1px solid #e5e5e5">
+  <!-- Divider -->
+  <hr style="margin:20px 0;border:none;border-top:1px solid #e5e5e5;" />
 
-  <div style="font-size:15px;color:#111;font-weight:600">
+  <!-- Name -->
+  <div style="font-size:15px;color:#111;font-weight:600;">
     ${myName}
   </div>
 
-  <div style="font-size:13px;color:#666;margin-top:2px">
-    Software Development Engineer · IIIT Nagpur
+  <!-- Title -->
+  <div style="font-size:13px;color:#666;margin-top:2px;">
+    Software Development Engineer &nbsp;·&nbsp; IIIT Nagpur
   </div>
 
-  <div style="margin-top:6px;font-size:13px;color:#444">
-    Phone: <a href="tel:${phone}" style="color:#444;text-decoration:none">${phone}</a><br>
-    Email: <a href="mailto:${email}" style="color:#444;text-decoration:none">${email}</a>
+  <!-- Contact -->
+  <div style="margin-top:8px;font-size:13px;color:#444;line-height:1.8;">
+    <a href="tel:${phone}" style="color:#444;text-decoration:none;">${phone}</a><br />
+    <a href="mailto:${email}" style="color:#444;text-decoration:none;">${email}</a>
   </div>
 
-  <div style="margin-top:10px">
-    <a href="${portfolio}" 
-      style="display:inline-block;padding:6px 11px;margin-right:6px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:4px;font-size:11px">
+  <!-- CTA Buttons -->
+  <div style="margin-top:14px;">
+    <a href="${portfolio}"
+      style="display:inline-block;padding:7px 14px;margin-right:8px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:5px;font-size:12px;font-weight:500;">
       Portfolio
     </a>
-
-    <a href="${resume}" 
-      style="display:inline-block;padding:6px 11px;background:#0a66c2;color:#ffffff;text-decoration:none;border-radius:4px;font-size:11px">
+    <a href="${resume}"
+      style="display:inline-block;padding:7px 14px;background:#0a66c2;color:#ffffff;text-decoration:none;border-radius:5px;font-size:12px;font-weight:500;">
       Resume
     </a>
   </div>

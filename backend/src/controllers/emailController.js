@@ -1,4 +1,4 @@
-import { generateEmail, generateUniqueSubject } from "../services/aiService.js";
+import { generateEmail } from "../services/aiService.js";
 import { sendEmailSafely, waitWithCountdown } from "../services/mailService.js";
 import {
   readGoogleSheetData,
@@ -131,10 +131,9 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           stats,
         });
 
-        const subject = await generateUniqueSubject(name);
-        const emailBody = await generateEmail(name);
+        const { subject, html } = await generateEmail(name);
 
-        const sendResult = await sendEmailSafely(email, subject, emailBody, {
+        const sendResult = await sendEmailSafely(email, subject, html, {
           onEvent: (mailEvent) =>
             emit({
               type: "progress",
