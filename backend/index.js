@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Frontend origin(s) allowed for CORS
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
 
 app.use(
   cors({

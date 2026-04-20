@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./styles.css";
 
-const envBase = (import.meta.env.VITE_API_BASE || "").trim();
-const defaultBase = "http://localhost:3000";
-const apiBase = (envBase || defaultBase).replace(/\/$/, "");
+// Handle API Base URL from Environment Variables
+const apiBase = (import.meta.env.VITE_API_BASE || "http://localhost:3000").replace(/\/$/, "");
 
 const initialState = {
   isRunning: false,
@@ -25,32 +24,18 @@ const initialState = {
   isGenerating: false,
 };
 
-const formatTime = (iso) => {
-  if (!iso) return "-";
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleTimeString();
-};
-
-const badgeClass = (state) => {
-  if (state.lastError) return "badge error";
-  if (state.isRunning && state.stopRequested) return "badge stopping";
-  if (state.isRunning) return "badge running";
-  return "badge idle";
-};
-
 function App() {
   const [appState, setAppState] = useState(initialState);
   const [logs, setLogs] = useState([]);
   const [sentItems, setSentItems] = useState([]);
-  const [updatedAt, setUpdatedAt] = useState("Awaiting updates...");
+  const [updatedAt, setUpdatedAt] = useState("System Standby");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState(
-    () => localStorage.getItem("authToken") || "",
-  );
+  const [token, setToken] = useState(() => localStorage.getItem("authToken") || "");
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showActivity, setShowActivity] = useState(false);
+  const [viewMode, setViewMode] = useState("dashboard"); // dashboard | activity
+  const [backendAlive, setBackendAlive] = useState(true);
 
   const isAuthed = Boolean(token);
 
@@ -62,576 +47,265 @@ function App() {
       };
       return fetch(`${apiBase}${path}`, { ...options, headers });
     },
-    [token],
+    [token]
   );
 
   const progress = useMemo(() => {
     const total = appState.total || appState.stats.validUsers || 0;
     const processed = appState.stats.processed || 0;
     const pct = total > 0 ? Math.min(100, (processed / total) * 100) : 0;
-    return {
-      total,
-      processed,
-      remaining: Math.max(total - processed, 0),
-      pct,
-    };
-  }, [appState.total, appState.stats.validUsers, appState.stats.processed]);
+    return { total, processed, pct };
+  }, [appState]);
 
   const appendLog = useCallback((event) => {
     if (!event?.message) return;
-
-    const message = event.message || "";
-    const isWait = event.level === "wait" || event.stage === "waiting";
-    const isPrepare =
-      event.stage === "preparing" || message.includes("Preparing email for");
-    const isGenerate =
-      event.stage === "generating" ||
-      message.includes("Generating content for");
-    const isSkip =
-      message.startsWith("Skipping ") || message.startsWith("Skipped ");
-    if (isWait || isPrepare || isGenerate || isSkip) return;
-
-    const line = `[${formatTime(event.timestamp || new Date().toISOString())}] ${message}`;
-    setLogs((prev) => {
-      const next = [...prev, line];
-      return next.length > 280 ? next.slice(-280) : next;
-    });
+    const time = new Date().toLocaleTimeString();
+    const line = `[${time}] ${event.message}`;
+    setLogs((prev) => [line, ...prev].slice(0, 100));
   }, []);
 
-  const addSentItemFromEvent = useCallback((event) => {
-    if (!event?.message) return;
-    const match = event.message.match(/^Marked\s+(\S+)\s+as Sent/i);
-    const email = match?.[1];
-    if (!email) return;
-
-    setSentItems((prev) => {
-      if (prev.some((item) => item.email === email)) return prev;
-      const next = [
-        { email, timestamp: event.timestamp || new Date().toISOString() },
-        ...prev,
-      ];
-      return next.length > 300 ? next.slice(0, 300) : next;
-    });
-  }, []);
-
-  const applySnapshot = useCallback(
-    (snapshot) => {
-      setAppState((prev) => ({
-        ...prev,
-        ...snapshot,
-        stats: snapshot.stats || prev.stats,
-        position: 0,
-        total: snapshot.stats?.validUsers || prev.total,
-        waitSeconds: null,
-        isGenerating: false,
-        liveStep: snapshot.liveStep || "-",
-        lastError: snapshot.lastError ?? null,
-      }));
-
-      setLogs(() => []);
-      setSentItems(() => []);
-      (snapshot.recentLogs || []).forEach((entry) => {
-        addSentItemFromEvent(entry);
-        appendLog(entry);
-      });
-    },
-    [addSentItemFromEvent, appendLog],
-  );
-
-  const consumeEvent = useCallback(
-    (event) => {
-      setAppState((prev) => {
-        const next = { ...prev };
-
-        if (event.stats) next.stats = event.stats;
-        if (event.currentEmail) next.currentEmail = event.currentEmail;
-        if (event.position) next.position = event.position;
-        if (event.total) next.total = event.total;
-
-        const liveTotal = next.total || next.stats.validUsers || 0;
-        const livePos = next.position || next.stats.processed || 0;
-        if (
-          event.stage === "preparing" ||
-          event.message?.includes("Preparing email for")
-        ) {
-          next.liveStep = `${livePos}/${liveTotal} preparing`;
-        } else if (
-          event.stage === "generating" ||
-          event.message?.includes("Generating content for")
-        ) {
-          next.liveStep = `${livePos}/${liveTotal} generating`;
-          next.isGenerating = true;
-          next.waitSeconds = null;
-        } else if (
-          event.message?.startsWith("Skipping ") ||
-          event.message?.startsWith("Skipped ")
-        ) {
-          next.liveStep = `${livePos}/${liveTotal} skipped`;
-        } else if (event.stage === "waiting" || event.level === "wait") {
-          next.liveStep = `${livePos}/${liveTotal} waiting`;
-          next.isGenerating = false;
-        } else if (event.message?.startsWith("Marked ")) {
-          next.liveStep = `${livePos}/${liveTotal} sent`;
-          next.isGenerating = false;
-        } else if (event.level === "error") {
-          next.liveStep = `${livePos}/${liveTotal} failed`;
-          next.isGenerating = false;
-        }
-
-        if (event.remainingSeconds !== undefined) {
-          next.waitSeconds = event.remainingSeconds;
-        }
-
-        if (event.level === "success" || event.message?.startsWith("Marked ")) {
-          next.waitSeconds = null;
-        }
-
-        if (event.phase === "error") {
-          next.lastError = event.message;
-          next.isRunning = false;
-          next.stopRequested = false;
-        }
-
-        if (event.phase === "running") {
-          next.lastError = null;
-          next.isRunning = true;
-          next.stopRequested = false;
-          next.isGenerating = false;
-        }
-
-        if (event.phase === "stopping") {
-          next.isRunning = true;
-          next.stopRequested = true;
-        }
-
-        if (
-          event.phase === "stopped" ||
-          event.phase === "completed" ||
-          event.phase === "error"
-        ) {
-          next.waitSeconds = null;
-          next.isGenerating = false;
-          next.isRunning = false;
-          next.stopRequested = false;
-          if (event.phase === "completed") {
-            next.liveStep = `${next.stats.processed}/${next.total || next.stats.validUsers} completed`;
-          }
-        }
-
-        return next;
-      });
-
-      appendLog(event);
-      addSentItemFromEvent(event);
-    },
-    [addSentItemFromEvent, appendLog],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!token) {
-      setUpdatedAt("Login required");
-      setAppState(initialState);
-      setLogs([]);
-      setSentItems([]);
-      return () => {
-        cancelled = true;
-      };
+  const addSentItem = useCallback((event) => {
+    const match = event.message?.match(/Marked\s+(\S+)\s+as Sent/i);
+    if (match?.[1]) {
+      setSentItems((prev) => [{ email: match[1], time: new Date().toLocaleTimeString() }, ...prev].slice(0, 50));
     }
+  }, []);
 
-    const loadInitial = async () => {
+  // Sync state from backend
+  useEffect(() => {
+    if (!isAuthed) return;
+
+    const checkStatus = async () => {
       try {
-        const res = await authorizedFetch(`/api/status`);
+        const res = await authorizedFetch("/api/status");
         if (res.status === 401) {
-          setAuthError("Session expired. Please login again.");
-          setToken("");
-          localStorage.removeItem("authToken");
+          handleLogout();
           return;
         }
         const data = await res.json();
-        if (cancelled) return;
-        applySnapshot(data);
-        setUpdatedAt(`Last update: ${formatTime(new Date().toISOString())}`);
+        setAppState(prev => ({ ...prev, ...data }));
+        setBackendAlive(true);
       } catch (err) {
-        appendLog({
-          timestamp: new Date().toISOString(),
-          message: err.message,
-        });
+        setBackendAlive(false);
       }
     };
 
-    loadInitial();
+    checkStatus();
+    const timer = setInterval(checkStatus, 5000);
+    return () => clearInterval(timer);
+  }, [isAuthed, authorizedFetch]);
 
-    const stream = new EventSource(
-      `${apiBase}/api/events?token=${encodeURIComponent(token)}`,
-    );
-    stream.onmessage = (message) => {
-      if (cancelled) return;
-      const event = JSON.parse(message.data);
-      setUpdatedAt(
-        `Last update: ${formatTime(event.timestamp || new Date().toISOString())}`,
-      );
+  // Event Stream (SSE)
+  useEffect(() => {
+    if (!isAuthed) return;
 
+    const stream = new EventSource(`${apiBase}/api/events?token=${encodeURIComponent(token)}`);
+    
+    stream.onmessage = (e) => {
+      const event = JSON.parse(e.data);
+      setUpdatedAt(`Updated: ${new Date().toLocaleTimeString()}`);
+      
       if (event.type === "snapshot") {
-        applySnapshot(event);
-        return;
-      }
-
-      consumeEvent(event);
-
-      if (event.type === "heartbeat") {
-        authorizedFetch(`/api/status`)
-          .then((res) => res.json())
-          .then((state) => {
-            if (cancelled) return;
-            setAppState((prev) => ({
-              ...prev,
-              ...state,
-              stats: state.stats || prev.stats,
-            }));
-          })
-          .catch(() => {});
+        setAppState(prev => ({ ...prev, ...event }));
+      } else {
+        appendLog(event);
+        addSentItem(event);
+        if (event.phase) {
+          setAppState(prev => ({ ...prev, isRunning: event.phase === "running", stopRequested: event.phase === "stopping" }));
+        }
       }
     };
 
     stream.onerror = () => {
-      if (cancelled) return;
-      setAuthError("Event stream disconnected. Re-login if issue persists.");
-      appendLog({
-        timestamp: new Date().toISOString(),
-        message: "Event stream disconnected, retrying...",
-      });
+      console.error("Stream disconnected");
     };
 
-    return () => {
-      cancelled = true;
-      stream.close();
-    };
-  }, [appendLog, applySnapshot, consumeEvent, authorizedFetch, token]);
-
-  const handleStart = async () => {
-    try {
-      setLogs(() => []);
-      setSentItems(() => []);
-      const res = await authorizedFetch(`/api/start`, { method: "POST" });
-      if (res.status === 401) {
-        setAuthError("Session expired. Please login again.");
-        await handleLogout();
-        return;
-      }
-      if (!res.ok) {
-        throw new Error("Failed to start automation");
-      }
-    } catch (err) {
-      appendLog({ timestamp: new Date().toISOString(), message: err.message });
-    }
-  };
-
-  const handleStop = async () => {
-    try {
-      const res = await authorizedFetch(`/api/stop`, { method: "POST" });
-      if (res.status === 401) {
-        setAuthError("Session expired. Please login again.");
-        await handleLogout();
-        return;
-      }
-      if (!res.ok) {
-        throw new Error("Failed to stop automation");
-      }
-    } catch (err) {
-      appendLog({ timestamp: new Date().toISOString(), message: err.message });
-    }
-  };
+    return () => stream.close();
+  }, [isAuthed, token, appendLog, addSentItem]);
 
   const handleLogin = async (e) => {
-    e?.preventDefault();
+    e.preventDefault();
     setAuthError("");
     try {
-      if (!apiBase) throw new Error("API not resolved yet");
       const res = await fetch(`${apiBase}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      if (res.status === 404)
-        throw new Error(
-          `API not reachable at "${apiBase}". Check backend URL/env.`,
-        );
-      if (res.status === 401) throw new Error("Invalid username or password");
-      if (!res.ok) throw new Error("Login failed, try again.");
+      if (res.status === 401) throw new Error("Invalid credentials");
       const data = await res.json();
       setToken(data.token);
       localStorage.setItem("authToken", data.token);
-      setPassword("");
     } catch (err) {
-      setAuthError(err.message || "Login failed");
+      setAuthError(err.message);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authorizedFetch(`/api/logout`, { method: "POST" });
-    } catch {
-      // ignore logout failures
-    } finally {
-      setToken("");
-      localStorage.removeItem("authToken");
-    }
+  const handleLogout = () => {
+    setToken("");
+    localStorage.removeItem("authToken");
   };
 
-  const waitLabel = appState.isGenerating
-    ? "Generating..."
-    : Number.isFinite(appState.waitSeconds) && appState.waitSeconds > 0
-      ? `${appState.waitSeconds}s`
-      : "--";
+  const startAutomation = () => authorizedFetch("/api/start", { method: "POST" });
+  const stopAutomation = () => authorizedFetch("/api/stop", { method: "POST" });
 
   if (!isAuthed) {
     return (
-      <>
-        <div className="bg-shape bg-shape-1" />
-        <div className="bg-shape bg-shape-2" />
-        <main className="auth-layout">
-          <section className="auth-card">
-            <p className="kicker">AI HR Mailer</p>
-            <h1>Login Required</h1>
-            <p className="subtitle">
-              Enter your username and password to continue.
-            </p>
-            <form className="auth-form" onSubmit={handleLogin}>
-              <label>
-                <span>Username</span>
-                <input
-                  className="auth-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                />
-              </label>
-              <label>
-                <span>Password</span>
-                <div className="password-row">
-                  <input
-                    className="auth-input"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="show-btn"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </label>
-              {authError && <div className="auth-error">{authError}</div>}
-              <button className="btn btn-primary" type="submit">
-                Login
-              </button>
-            </form>
-          </section>
+      <div className="auth-wrapper fade-in">
+        <div className="glow-container">
+          <div className="glow-circle glow-1"></div>
+          <div className="glow-circle glow-2"></div>
+        </div>
+        <main className="card auth-card">
+          <div className="logo-section">
+            <div className="logo-icon">AI</div>
+            <div className="logo-text">
+              <h1>HR Mailer</h1>
+              <p>Authentication Required</p>
+            </div>
+          </div>
+          <form className="auth-form" onSubmit={handleLogin}>
+            <div className="input-group">
+              <label>Username</label>
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
+            </div>
+            <div className="input-group">
+              <label>Password</label>
+              <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required />
+            </div>
+            {authError && <div className="error-bg">{authError}</div>}
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Login to Console</button>
+            <div className="auth-footer">
+               <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '0.8rem' }}>
+                  {showPassword ? "Hide" : "Show"} Password
+               </button>
+            </div>
+          </form>
         </main>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="bg-shape bg-shape-1" />
-      <div className="bg-shape bg-shape-2" />
+    <div className="app-container fade-in">
+      <div className="glow-container">
+        <div className="glow-circle glow-1"></div>
+        <div className="glow-circle glow-2"></div>
+      </div>
 
-      <div className="page-shell">
-        <header className="topbar">
-          <div className="brand">
-            <div className="brand-mark">AI</div>
-            <div>
-              <p className="eyebrow">AI HR Mailer</p>
-              <h1>Automation Console</h1>
+      <header className="app-header">
+        <div className="logo-section">
+          <div className="logo-icon">AI</div>
+          <div className="logo-text">
+            <h1>HR Automation</h1>
+            <p>Admin Control Center</p>
+          </div>
+        </div>
+        <div className="header-actions">
+          {!backendAlive && <span className="status-pill" style={{ background: 'rgba(244, 63, 94, 0.2)', color: 'var(--danger)' }}>Backend Offline</span>}
+          <div className={`status-pill ${appState.isRunning ? 'status-running' : 'status-idle'}`}>
+            {appState.isRunning ? 'Streaming Live' : 'System Idle'}
+          </div>
+          <button className="btn btn-danger" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>Logout</button>
+        </div>
+      </header>
+
+      <div className="dashboard-grid">
+        <section className="card main-control">
+          <div className="section-title">
+            <h2>Operation Control</h2>
+            <div className="btn-group">
+              <button 
+                className="btn btn-primary" 
+                onClick={startAutomation} 
+                disabled={appState.isRunning}
+              >
+                ▶ Start Run
+              </button>
+              <button 
+                className="btn btn-danger" 
+                onClick={stopAutomation} 
+                disabled={!appState.isRunning}
+              >
+                ■ Stop Run
+              </button>
             </div>
           </div>
-          <div className="session">
-            <span
-              className={`pill ${appState.isRunning ? "pill-live" : "pill-idle"}`}
-            >
-              {appState.isRunning ? "Live" : "Idle"}
-            </span>
-            {!showActivity && (
-              <button
-                className="pill pill-action"
-                onClick={() => setShowActivity(true)}
-              >
-                Activity Feed
-              </button>
-            )}
-            {showActivity && (
-              <button
-                className="pill pill-ghost"
-                onClick={() => setShowActivity(false)}
-              >
-                Back to Dashboard
-              </button>
-            )}
-            <button className="pill pill-ghost" onClick={handleLogout}>
-              Logout
-            </button>
+
+          <div className="progress-container">
+            <div className="progress-info">
+              <span>Overall Progress</span>
+              <span>{progress.processed} / {progress.total} Emails ({progress.pct.toFixed(1)}%)</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div className="progress-bar-fill" style={{ width: `${progress.pct}%` }}></div>
+            </div>
           </div>
-        </header>
 
-        <main className={`layout ${showActivity ? "feed-mode" : ""}`}>
-          {!showActivity && (
-            <>
-              <section className="panel hero">
-                <p className="kicker">Control</p>
-                <h2>Run the email automations</h2>
-                <p className="subtitle">
-                  Start/stop ke saath live progress, queue health, aur wait
-                  timer.
-                </p>
+          <div className="stats-grid" style={{ marginTop: '2rem' }}>
+            <div className="stat-item">
+              <span className="stat-label">Current Target</span>
+              <span className="stat-value" style={{ fontSize: '1.2rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appState.currentEmail || "None"}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Wait Timer</span>
+              <span className="stat-value" style={{ fontSize: '1.2rem' }}>{appState.waitSeconds ? `${appState.waitSeconds}s` : "--"}</span>
+            </div>
+          </div>
+        </section>
 
-                <div className="controls">
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleStart}
-                    disabled={appState.isRunning}
-                  >
-                    Start Automation
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={handleStop}
-                    disabled={!appState.isRunning}
-                  >
-                    Stop
-                  </button>
+        <section className="card stats-panel">
+          <div className="section-title">
+            <h2>Live Statistics</h2>
+          </div>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <span className="stat-label">Sent</span>
+              <span className="stat-value">{appState.stats.sent}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Pending</span>
+              <span className="stat-value">{progress.total - progress.processed}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Skipped</span>
+              <span className="stat-value">{appState.stats.skipped}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Failed</span>
+              <span className="stat-value" style={{ color: 'var(--danger)' }}>{appState.stats.failed}</span>
+            </div>
+          </div>
+          <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'right' }}>
+            {updatedAt}
+          </div>
+        </section>
+
+        <section className="card full-width">
+          <div className="section-title">
+            <h2>Activity & Logs</h2>
+            <div className="btn-group">
+               <button className={`btn ${viewMode === 'dashboard' ? 'btn-primary' : 'btn-danger'}`} onClick={() => setViewMode('dashboard')} style={{ padding: '0.4rem 1rem' }}>Console</button>
+               <button className={`btn ${viewMode === 'activity' ? 'btn-primary' : 'btn-danger'}`} onClick={() => setViewMode('activity')} style={{ padding: '0.4rem 1rem' }}>Sent History</button>
+            </div>
+          </div>
+          <div className="activity-feed">
+            <div className="log-viewer">
+              {logs.length > 0 ? logs.map((log, i) => <div key={i} style={{ marginBottom: '4px' }}>{log}</div>) : "Awaiting input..."}
+            </div>
+            <div className="sent-list">
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Recent Success</h3>
+              {sentItems.length > 0 ? sentItems.map((item, i) => (
+                <div key={i} className="sent-item">
+                  <span>{item.email}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}>{item.time}</span>
                 </div>
-
-                <section className="progress-wrap">
-                  <div className="progress-top">
-                    <span className="mono">
-                      {progress.processed} / {progress.total} processed
-                    </span>
-                    <span className="mono">{progress.pct.toFixed(1)}%</span>
-                  </div>
-                  <div className="progress-track">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${progress.pct.toFixed(1)}%` }}
-                    />
-                  </div>
-                </section>
-
-                <div className="quick-kpis">
-                  <article>
-                    <p>Remaining</p>
-                    <strong>{progress.remaining}</strong>
-                  </article>
-                  <article>
-                    <p>Wait Timer</p>
-                    <strong>{waitLabel}</strong>
-                  </article>
-                  <article>
-                    <p>Current Email</p>
-                    <strong className="mono">
-                      {appState.currentEmail || "-"}
-                    </strong>
-                  </article>
-                  <article>
-                    <p>Live Step</p>
-                    <strong className="mono">{appState.liveStep || "-"}</strong>
-                  </article>
-                </div>
-
-                <div className="status-row">
-                  <span className="label">Status</span>
-                  <span className={badgeClass(appState)}>
-                    {appState.lastError
-                      ? "Error"
-                      : appState.isRunning
-                        ? appState.stopRequested
-                          ? "Stopping"
-                          : "Running"
-                        : "Idle"}
-                  </span>
-                </div>
-                <div className="status-row">
-                  <span className="label">Last Error</span>
-                  <span className="mono">{appState.lastError || "-"}</span>
-                </div>
-              </section>
-
-              <section className="panel stats">
-                <div className="panel-head">
-                  <h3>Run Snapshot</h3>
-                  <span className="mono">{updatedAt}</span>
-                </div>
-                <div className="grid panel-content">
-                  <article>
-                    <p>Total Rows</p>
-                    <strong>{appState.stats.totalRows}</strong>
-                  </article>
-                  <article>
-                    <p>Valid Users</p>
-                    <strong>{appState.stats.validUsers}</strong>
-                  </article>
-                  <article>
-                    <p>Processed</p>
-                    <strong>{appState.stats.processed}</strong>
-                  </article>
-                  <article>
-                    <p>Sent</p>
-                    <strong>{appState.stats.sent}</strong>
-                  </article>
-                  <article>
-                    <p>Skipped</p>
-                    <strong>{appState.stats.skipped}</strong>
-                  </article>
-                  <article>
-                    <p>Failed</p>
-                    <strong>{appState.stats.failed}</strong>
-                  </article>
-                </div>
-              </section>
-            </>
-          )}
-
-          {showActivity && (
-            <section className="panel logs slide-in">
-              <div className="logs-header">
-                <h2>Activity Feed</h2>
-                <span className="mono">{updatedAt}</span>
-              </div>
-              <div className="stream-grid panel-content">
-                <pre className="log-box">
-                  {logs.length ? logs.join("\n") : "No logs yet."}
-                </pre>
-                <section className="sent-stream">
-                  <div className="sent-head">
-                    <h3>Sent Mails (This Run)</h3>
-                    <span className="mono">{sentItems.length}</span>
-                  </div>
-                  <ul className="sent-list">
-                    {sentItems.length === 0 && <li>No sent mail yet.</li>}
-                    {sentItems.map((item) => (
-                      <li key={item.email + item.timestamp}>
-                        [{formatTime(item.timestamp)}] {item.email}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              </div>
-            </section>
-          )}
-        </main>
+              )) : "No emails sent in this session."}
+            </div>
+          </div>
+        </section>
       </div>
-    </>
+    </div>
   );
 }
 
