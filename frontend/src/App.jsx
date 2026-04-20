@@ -197,7 +197,9 @@ function App() {
         </div>
         <main className="card auth-card">
           <div className="logo-section">
-            <div className="logo-icon">AI</div>
+            <div className="logo-icon">
+              <img src="/logo.png" alt="AI HR Automation Logo" className="logo-img" />
+            </div>
             <div className="logo-text">
               <h1>HR Mailer</h1>
               <p>Authentication Required</p>
@@ -234,7 +236,9 @@ function App() {
 
       <header className="app-header">
         <div className="logo-section">
-          <div className="logo-icon">AI</div>
+          <div className="logo-icon">
+            <img src="/logo.png" alt="AI HR Automation Logo" className="logo-img" />
+          </div>
           <div className="logo-text">
             <h1>HR Automation</h1>
             <p>Admin Control Center</p>

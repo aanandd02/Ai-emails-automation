@@ -19,11 +19,34 @@ const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || "Sheet1";
 if (!GOOGLE_SHEET_ID) {
   throw new Error("Missing required env var: GOOGLE_SHEET_ID");
 }
-if (!fs.existsSync(credentialsPath)) {
-  throw new Error(`Missing Google credentials file at: ${credentialsPath}`);
+
+let credentials;
+// Priority 1: Environment Variable (as JSON string)
+if (process.env.GOOGLE_CREDENTIALS) {
+  try {
+    credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    logger.info("✅ Using Google credentials from environment variable");
+  } catch (err) {
+    logger.error("❌ Failed to parse GOOGLE_CREDENTIALS environment variable as JSON");
+  }
 }
 
-const credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf-8"));
+// Priority 2: Local File
+if (!credentials) {
+  if (fs.existsSync(credentialsPath)) {
+    try {
+      credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf-8"));
+      logger.info("✅ Using Google credentials from local file");
+    } catch (err) {
+      logger.error(`❌ Failed to parse local credentials file at: ${credentialsPath}`);
+    }
+  }
+}
+
+if (!credentials) {
+  throw new Error(`Google credentials not found. Please provide GOOGLE_CREDENTIALS env var or place the file at: ${credentialsPath}`);
+}
+
 const auth = new google.auth.GoogleAuth({
   credentials,
   scopes: SCOPES,
