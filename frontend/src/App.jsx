@@ -36,8 +36,30 @@ function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [viewMode, setViewMode] = useState("dashboard"); // dashboard | activity
   const [backendAlive, setBackendAlive] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const isAuthed = Boolean(token);
+
+  // Initialize and check health
+  useEffect(() => {
+    let retryCount = 0;
+    const checkHealth = async () => {
+      try {
+        const res = await fetch(`${apiBase}/health`);
+        if (res.ok) {
+          setIsInitializing(false);
+          setBackendAlive(true);
+        } else {
+          throw new Error();
+        }
+      } catch (err) {
+        retryCount++;
+        // Keep retrying during cold start
+        setTimeout(checkHealth, 2000);
+      }
+    };
+    checkHealth();
+  }, []);
 
   const authorizedFetch = useCallback(
     (path, options = {}) => {
@@ -148,6 +170,23 @@ function App() {
 
   const startAutomation = () => authorizedFetch("/api/start", { method: "POST" });
   const stopAutomation = () => authorizedFetch("/api/stop", { method: "POST" });
+
+  if (isInitializing) {
+    return (
+      <div className="system-loader">
+        <div className="loader-content">
+          <div className="loader-spinner"></div>
+          <div className="loader-text">
+            <h2>Initializing Systems</h2>
+            <p>Waking up Neural Engine... {backendAlive ? "Syncing" : "Waiting for Cloud"}</p>
+          </div>
+          <div className="loader-progress">
+             <div className="loader-progress-inner"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthed) {
     return (
