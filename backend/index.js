@@ -27,6 +27,10 @@ app.post("/api/logout", logoutHandler);
 // Protected automation APIs
 app.use("/api", requireAuth, automationRoutes);
 
+app.get("/", (_req, res) => {
+  res.json({ status: "running", message: "AI Email Automation API is active", healthCheck: "/health" });
+});
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
