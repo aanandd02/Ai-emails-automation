@@ -20,7 +20,6 @@ const initialState = {
   },
   position: 0,
   total: 0,
-  waitSeconds: null,
   targetTimestamp: null,
   isGenerating: false,
 };
@@ -39,6 +38,8 @@ function App() {
   const [backendAlive, setBackendAlive] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [activeTab, setActiveTab] = useState("dashboard"); // dashboard | console
+  const [liveWaitSeconds, setLiveWaitSeconds] = useState(null);
 
   // Apply theme to body
   useEffect(() => {
@@ -98,7 +99,7 @@ function App() {
   }, []);
 
   const addSentItem = useCallback((event) => {
-    const match = event.message?.match(/Marked\s+(\S+)\s+as Sent/i);
+    const match = event.message?.match(/Successfully\s+dispatched\s+to\s+(\S+)/i);
     if (match?.[1]) {
       setSentItems((prev) => [{ email: match[1], time: new Date().toLocaleTimeString() }, ...prev].slice(0, 50));
     }
@@ -128,21 +129,21 @@ function App() {
     return () => clearInterval(timer);
   }, [isAuthed, authorizedFetch]);
 
-  // Smooth Frontend Countdown
+  // Smooth Frontend Countdown (Isolated)
   useEffect(() => {
-    if (!appState.isRunning || !appState.targetTimestamp) return;
+    if (!appState.isRunning || !appState.targetTimestamp) {
+      setLiveWaitSeconds(null);
+      return;
+    }
 
-    const interval = setInterval(() => {
+    const updateTimer = () => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.round((appState.targetTimestamp - now) / 1000));
-      
-      setAppState(prev => {
-        if (prev.waitSeconds === remaining) return prev;
-        return { ...prev, waitSeconds: remaining };
-      });
+      const remaining = Math.max(0, Math.ceil((appState.targetTimestamp - now) / 1000));
+      setLiveWaitSeconds(remaining > 0 ? remaining : null);
+    };
 
-      if (remaining <= 0) clearInterval(interval);
-    }, 100);
+    updateTimer();
+    const interval = setInterval(updateTimer, 200);
 
     return () => clearInterval(interval);
   }, [appState.isRunning, appState.targetTimestamp]);
@@ -172,10 +173,8 @@ function App() {
 
           if (event.targetTimestamp) {
             newState.targetTimestamp = event.targetTimestamp;
-            newState.waitSeconds = event.remainingSeconds;
           } else if (event.stage && event.stage !== "waiting") {
             newState.targetTimestamp = null;
-            newState.waitSeconds = null;
           }
 
           if (event.phase) {
@@ -309,8 +308,13 @@ function App() {
         </div>
       </header>
 
+      <div className="mobile-tabs">
+        <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
+        <button className={`tab-btn ${activeTab === 'console' ? 'active' : ''}`} onClick={() => setActiveTab('console')}>Console</button>
+      </div>
+
       <div className="dashboard-grid">
-        <section className="card main-control">
+        <section className={`card main-control ${activeTab === 'console' ? 'tab-content-hidden' : ''}`}>
           <div className="section-title">
             <h2>Operation Control</h2>
             <div className="btn-group">
@@ -348,12 +352,17 @@ function App() {
             </div>
             <div className="stat-item">
               <span className="stat-label">Wait Timer</span>
-              <span className="stat-value" style={{ fontSize: '1.2rem' }}>{appState.waitSeconds ? `${appState.waitSeconds}s` : "--"}</span>
+              <span className="stat-value" style={{ 
+                fontSize: liveWaitSeconds ? '1.5rem' : '0.9rem',
+                color: liveWaitSeconds ? 'var(--text-main)' : 'var(--accent-primary)'
+              }}>
+                {liveWaitSeconds ? `${liveWaitSeconds}s` : (appState.isRunning ? "Generating..." : "--")}
+              </span>
             </div>
           </div>
         </section>
 
-        <section className="card stats-panel">
+        <section className={`card stats-panel ${activeTab === 'console' ? 'tab-content-hidden' : ''}`}>
           <div className="section-title">
             <h2>Live Statistics</h2>
           </div>
@@ -380,7 +389,7 @@ function App() {
           </div>
         </section>
 
-        <section className="card full-width">
+        <section className={`card full-width ${activeTab === 'dashboard' ? 'tab-content-hidden' : ''}`}>
           <div className="section-title">
             <h2>Activity & Logs</h2>
             <div className="btn-group">
