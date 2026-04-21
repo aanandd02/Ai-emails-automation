@@ -19,6 +19,7 @@ class AutomationRunner extends EventEmitter {
       processed: 0,
     };
     this.logs = [];
+    this.waitSeconds = null;
   }
 
   getState() {
@@ -30,6 +31,7 @@ class AutomationRunner extends EventEmitter {
       lastError: this.lastError,
       stats: this.stats,
       recentLogs: this.logs,
+      waitSeconds: this.waitSeconds,
     };
   }
 
@@ -61,6 +63,12 @@ class AutomationRunner extends EventEmitter {
 
     if (event.currentEmail) {
       this.currentEmail = event.currentEmail;
+    }
+
+    if (event.remainingSeconds !== undefined) {
+      this.waitSeconds = event.remainingSeconds;
+    } else if (event.stage && event.stage !== "waiting") {
+      this.waitSeconds = null;
     }
 
     if (event.type === "status") {
@@ -96,6 +104,7 @@ class AutomationRunner extends EventEmitter {
       processed: 0,
     };
     this.logs = [];
+    this.waitSeconds = null;
 
     this.emitUpdate("status", {
       phase: "running",

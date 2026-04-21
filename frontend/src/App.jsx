@@ -81,7 +81,8 @@ function App() {
 
   const appendLog = useCallback((event) => {
     if (!event?.message) return;
-    const time = new Date().toLocaleTimeString();
+    const date = event.timestamp ? new Date(event.timestamp) : new Date();
+    const time = date.toLocaleTimeString();
     const line = `[${time}] ${event.message}`;
     setLogs((prev) => [line, ...prev].slice(0, 100));
   }, []);
@@ -132,9 +133,26 @@ function App() {
       } else {
         appendLog(event);
         addSentItem(event);
-        if (event.phase) {
-          setAppState(prev => ({ ...prev, isRunning: event.phase === "running", stopRequested: event.phase === "stopping" }));
-        }
+
+        setAppState(prev => {
+          const newState = { ...prev };
+          if (event.stats) newState.stats = { ...event.stats };
+          if (event.currentEmail) newState.currentEmail = event.currentEmail;
+          if (event.position) newState.position = event.position;
+          if (event.total) newState.total = event.total;
+
+          if (event.remainingSeconds !== undefined) {
+            newState.waitSeconds = event.remainingSeconds;
+          } else if (event.stage && event.stage !== "waiting") {
+            newState.waitSeconds = null;
+          }
+
+          if (event.phase) {
+            newState.isRunning = event.phase === "running";
+            newState.stopRequested = event.phase === "stopping";
+          }
+          return newState;
+        });
       }
     };
 
