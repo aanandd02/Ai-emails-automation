@@ -31,6 +31,14 @@ View my resume: https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW
 
 export async function waitWithCountdown(seconds, options = {}) {
   const { onEvent, shouldStop } = options;
+  const targetTimestamp = Date.now() + seconds * 1000;
+
+  onEvent?.({
+    level: "wait",
+    stage: "waiting",
+    remainingSeconds: seconds,
+    targetTimestamp,
+  });
 
   for (let i = seconds; i > 0; i--) {
     if (shouldStop?.()) {
@@ -40,13 +48,7 @@ export async function waitWithCountdown(seconds, options = {}) {
       });
       throw new Error("Automation stopped by user");
     }
-
-    onEvent?.({
-      level: "wait",
-      stage: "waiting",
-      remainingSeconds: i,
-    });
-
+    // We still loop to check shouldStop every second, but we don't send events anymore
     await new Promise((r) => setTimeout(r, 1000));
   }
 }

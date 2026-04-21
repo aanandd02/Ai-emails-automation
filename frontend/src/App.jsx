@@ -21,6 +21,7 @@ const initialState = {
   position: 0,
   total: 0,
   waitSeconds: null,
+  targetTimestamp: null,
   isGenerating: false,
 };
 
@@ -129,17 +130,22 @@ function App() {
 
   // Smooth Frontend Countdown
   useEffect(() => {
-    if (!appState.isRunning || !appState.waitSeconds || appState.waitSeconds <= 0) return;
+    if (!appState.isRunning || !appState.targetTimestamp) return;
 
     const interval = setInterval(() => {
-      setAppState(prev => ({
-        ...prev,
-        waitSeconds: prev.waitSeconds > 0 ? prev.waitSeconds - 1 : 0
-      }));
-    }, 1000);
+      const now = Date.now();
+      const remaining = Math.max(0, Math.round((appState.targetTimestamp - now) / 1000));
+      
+      setAppState(prev => {
+        if (prev.waitSeconds === remaining) return prev;
+        return { ...prev, waitSeconds: remaining };
+      });
+
+      if (remaining <= 0) clearInterval(interval);
+    }, 100);
 
     return () => clearInterval(interval);
-  }, [appState.isRunning, appState.waitSeconds > 0]);
+  }, [appState.isRunning, appState.targetTimestamp]);
 
   // Event Stream (SSE)
   useEffect(() => {
@@ -164,9 +170,11 @@ function App() {
           if (event.position) newState.position = event.position;
           if (event.total) newState.total = event.total;
 
-          if (event.remainingSeconds !== undefined) {
+          if (event.targetTimestamp) {
+            newState.targetTimestamp = event.targetTimestamp;
             newState.waitSeconds = event.remainingSeconds;
           } else if (event.stage && event.stage !== "waiting") {
+            newState.targetTimestamp = null;
             newState.waitSeconds = null;
           }
 
