@@ -345,14 +345,11 @@ function App() {
           <div className="stats-grid" style={{ marginTop: '2rem' }}>
             <div className="stat-item">
               <span className="stat-label">Current Target</span>
-              <span className="stat-value" style={{ fontSize: '1.2rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appState.currentEmail || "None"}</span>
+              <span className="stat-value email-value">{appState.currentEmail || "None"}</span>
             </div>
             <div className="stat-item">
               <span className="stat-label">Wait Timer</span>
-              <span className="stat-value" style={{ 
-                fontSize: liveWaitSeconds ? '1.5rem' : '0.9rem',
-                color: liveWaitSeconds ? 'var(--text-main)' : 'var(--accent-primary)'
-              }}>
+              <span className={`stat-value ${!liveWaitSeconds && appState.isRunning ? 'status-text' : ''}`}>
                 {liveWaitSeconds ? `${liveWaitSeconds}s` : (appState.isRunning ? "Generating..." : "--")}
               </span>
             </div>
@@ -378,7 +375,7 @@ function App() {
             </div>
             <div className="stat-item">
               <span className="stat-label">Failed</span>
-              <span className="stat-value" style={{ color: 'var(--danger)' }}>{appState.stats.failed}</span>
+              <span className="stat-value danger">{appState.stats.failed}</span>
             </div>
           </div>
           <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'right' }}>
