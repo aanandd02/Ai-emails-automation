@@ -38,7 +38,6 @@ function App() {
   const [backendAlive, setBackendAlive] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
-  const [activeTab, setActiveTab] = useState("dashboard"); // dashboard | console
   const [liveWaitSeconds, setLiveWaitSeconds] = useState(null);
 
   // Apply theme to body
@@ -308,15 +307,13 @@ function App() {
         </div>
       </header>
 
-      <div className="mobile-tabs">
-        <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
-        <button className={`tab-btn ${activeTab === 'console' ? 'active' : ''}`} onClick={() => setActiveTab('console')}>Console</button>
-      </div>
-
       <div className="dashboard-grid">
-        <section className={`card main-control ${activeTab === 'console' ? 'tab-content-hidden' : ''}`}>
+        <section className="card main-control">
           <div className="section-title">
-            <h2>Operation Control</h2>
+            <h2>System Control</h2>
+          </div>
+          
+          <div className="control-row">
             <div className="btn-group">
               <button 
                 className="btn btn-primary" 
@@ -362,9 +359,9 @@ function App() {
           </div>
         </section>
 
-        <section className={`card stats-panel ${activeTab === 'console' ? 'tab-content-hidden' : ''}`}>
+        <section className="card stats-panel">
           <div className="section-title">
-            <h2>Live Statistics</h2>
+            <h2>Analytics</h2>
           </div>
           <div className="stats-grid">
             <div className="stat-item">
@@ -389,13 +386,9 @@ function App() {
           </div>
         </section>
 
-        <section className={`card full-width ${activeTab === 'dashboard' ? 'tab-content-hidden' : ''}`}>
+        <section className="card full-width">
           <div className="section-title">
-            <h2>Activity & Logs</h2>
-            <div className="btn-group">
-               <button className={`btn ${viewMode === 'dashboard' ? 'btn-primary' : 'btn-danger'}`} onClick={() => setViewMode('dashboard')} style={{ padding: '0.4rem 1rem' }}>Console</button>
-               <button className={`btn ${viewMode === 'activity' ? 'btn-primary' : 'btn-danger'}`} onClick={() => setViewMode('activity')} style={{ padding: '0.4rem 1rem' }}>Sent History</button>
-            </div>
+            <h2>Activity & Success Stream</h2>
           </div>
           <div className="activity-feed">
             <div className="log-viewer">
