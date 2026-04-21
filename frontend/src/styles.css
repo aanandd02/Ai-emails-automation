@@ -74,6 +74,12 @@ body {
 }
 
 .auth-form { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem; }
+.btn-group { 
+  display: flex; 
+  flex-direction: row;
+  gap: 1.25rem; 
+  align-items: center;
+}
 .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
 .input-group label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 .input-group input { 
