@@ -44,7 +44,6 @@ export async function waitWithCountdown(seconds, options = {}) {
     onEvent?.({
       level: "wait",
       stage: "waiting",
-      message: `Waiting ${i}s before next email...`,
       remainingSeconds: i,
     });
 

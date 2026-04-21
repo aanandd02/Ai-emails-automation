@@ -37,6 +37,15 @@ function App() {
   const [viewMode, setViewMode] = useState("dashboard"); // dashboard | activity
   const [backendAlive, setBackendAlive] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  // Apply theme to body
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
 
   const isAuthed = Boolean(token);
 
@@ -80,7 +89,7 @@ function App() {
   }, [appState]);
 
   const appendLog = useCallback((event) => {
-    if (!event?.message) return;
+    if (!event?.message || event.level === "wait") return;
     const date = event.timestamp ? new Date(event.timestamp) : new Date();
     const time = date.toLocaleTimeString();
     const line = `[${time}] ${event.message}`;
@@ -117,6 +126,20 @@ function App() {
     const timer = setInterval(checkStatus, 5000);
     return () => clearInterval(timer);
   }, [isAuthed, authorizedFetch]);
+
+  // Smooth Frontend Countdown
+  useEffect(() => {
+    if (!appState.isRunning || !appState.waitSeconds || appState.waitSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setAppState(prev => ({
+        ...prev,
+        waitSeconds: prev.waitSeconds > 0 ? prev.waitSeconds - 1 : 0
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [appState.isRunning, appState.waitSeconds > 0]);
 
   // Event Stream (SSE)
   useEffect(() => {
@@ -264,10 +287,17 @@ function App() {
         </div>
         <div className="header-actions">
           {!backendAlive && <span className="status-pill" style={{ background: 'rgba(244, 63, 94, 0.2)', color: 'var(--danger)' }}>Backend Offline</span>}
+          
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
+            {theme === "dark" ? "☼" : "☾"}
+          </button>
+
           <div className={`status-pill ${appState.isRunning ? 'status-running' : 'status-idle'}`}>
             {appState.isRunning ? 'Streaming Live' : 'System Idle'}
           </div>
-          <button className="btn btn-danger" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>Logout</button>
+          <button className="btn btn-danger" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+            Logout
+          </button>
         </div>
       </header>
 
@@ -281,14 +311,14 @@ function App() {
                 onClick={startAutomation} 
                 disabled={appState.isRunning}
               >
-                ▶ Start Run
+                <span style={{ fontSize: '0.8rem' }}>▶</span> Start Run
               </button>
               <button 
                 className="btn btn-danger" 
                 onClick={stopAutomation} 
                 disabled={!appState.isRunning}
               >
-                ■ Stop Run
+                <span style={{ fontSize: '0.8rem' }}>■</span> Stop Run
               </button>
             </div>
           </div>

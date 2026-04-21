@@ -1,7 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 :root {
+  /* Dark Theme (Default) */
   --bg-dark: #080a12;
+  --bg-body: radial-gradient(circle at top right, #1e293b, #0f172a, #020617);
   --bg-card: rgba(15, 20, 35, 0.7);
   --bg-card-hover: rgba(20, 26, 45, 0.85);
   --border-glow: rgba(100, 210, 255, 0.2);
@@ -15,6 +17,25 @@
   --warning: #f59e0b;
   --glass-border: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --input-bg: rgba(0, 0, 0, 0.3);
+  --panel-bg: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] {
+  --bg-dark: #f8fafc;
+  --bg-body: radial-gradient(circle at top right, #f1f5f9, #e2e8f0, #cbd5e1);
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --border-glow: rgba(56, 189, 248, 0.1);
+  --text-main: #0f172a;
+  --text-dim: #64748b;
+  --accent-primary: #0284c7;
+  --accent-secondary: #4f46e5;
+  --accent-soft: rgba(2, 132, 199, 0.1);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --panel-bg: rgba(255, 255, 255, 0.5);
 }
 
 * {
@@ -28,8 +49,10 @@ body {
   min-height: 100vh;
   font-family: "Outfit", system-ui, -apple-system, sans-serif;
   color: var(--text-main);
-  background: radial-gradient(circle at top right, #1e293b, #0f172a, #020617);
+  background: var(--bg-body);
+  background-attachment: fixed;
   overflow-x: hidden;
+  transition: background 0.5s ease, color 0.3s ease;
 }
 
 /* Background Animated Glows */
@@ -129,7 +152,7 @@ body {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(to right, #fff, #94a3b8);
+  background: linear-gradient(to right, var(--text-main), var(--text-dim));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -145,7 +168,15 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
+}
+
+.theme-toggle {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.2) rotate(15deg);
 }
 
 /* Dashboard Grid */
@@ -207,19 +238,27 @@ body {
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   font-family: inherit;
-  font-size: 0.95rem; /* Better for mobile */
+  font-size: 0.95rem;
+}
+
+.btn:active {
+  transform: scale(0.96);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: #0f172a;
+  color: white;
+}
+
+[data-theme="light"] .btn-primary {
+  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -280,7 +319,7 @@ body {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .stat-item {
@@ -301,6 +340,7 @@ body {
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
+  color: var(--text-main);
 }
 
 /* Status Badges */
@@ -344,18 +384,18 @@ body {
 }
 
 .log-viewer {
-  background: #000;
+  background: var(--input-bg);
   border-radius: 16px;
   padding: 1rem;
   font-family: "JetBrains Mono", monospace;
   font-size: 0.85rem;
-  color: #a5f3fc;
+  color: var(--accent-primary);
   overflow-y: auto;
   border: 1px solid var(--glass-border);
 }
 
 .sent-list {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--panel-bg);
   border-radius: 16px;
   padding: 1rem;
   overflow-y: auto;
@@ -418,10 +458,10 @@ body {
 
 .input-group input {
   padding: 0.85rem 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--input-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--text-main);
   font-family: inherit;
   transition: border-color 0.2s;
 }
