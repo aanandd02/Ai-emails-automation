@@ -56,32 +56,30 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
     let skipStreakCount = 0;
     let skipStreakStartPosition = 0;
     let skipStreakLastEmail = "";
+    let isInitialSkipPhase = true;
 
     const flushSkipStreak = (position, force = false) => {
-      if (skipStreakCount === 0) {
-        return;
-      }
+      if (skipStreakCount === 0) return;
 
-      if (skipStreakCount === 1 && !force) {
-        return;
+      if (isInitialSkipPhase) {
+        emit({
+          type: "progress",
+          level: "info",
+          message: `Resuming Operation: ${skipStreakCount} contacts already processed. Starting from Row ${position}...`,
+          stats,
+        });
+        isInitialSkipPhase = false;
+      } else if (force || skipStreakCount > 1) {
+        emit({
+          type: "progress",
+          level: "warn",
+          message: `Skipped ${skipStreakCount} already-sent contacts (Rows ${skipStreakStartPosition}-${position - 1}).`,
+          stats,
+        });
       }
-
-      emit({
-        type: "progress",
-        level: "warn",
-        message:
-          skipStreakCount === 1
-            ? `Skipping ${skipStreakLastEmail} (already marked sent).`
-            : `Skipped ${skipStreakCount} already-sent contacts (rows ${skipStreakStartPosition}-${position - 1}). Last: ${skipStreakLastEmail}`,
-        currentEmail: skipStreakLastEmail,
-        position: position - 1,
-        total: validUsers.length,
-        stats,
-      });
 
       skipStreakCount = 0;
       skipStreakStartPosition = 0;
-      skipStreakLastEmail = "";
     };
 
     for (let i = 0; i < validUsers.length; i++) {
@@ -89,30 +87,25 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
 
       const { name, email, status, rowNumber } = validUsers[i];
       const position = i + 1;
-
       const alreadySent = status?.toLowerCase() === "sent";
 
       if (alreadySent) {
         stats.skipped += 1;
         stats.processed += 1;
         skipStreakCount += 1;
-        if (skipStreakStartPosition === 0) {
-          skipStreakStartPosition = position;
-        }
-        skipStreakLastEmail = email;
-        if (skipStreakCount % 25 === 0) {
-          flushSkipStreak(position + 1);
-        }
+        if (skipStreakStartPosition === 0) skipStreakStartPosition = rowNumber;
         continue;
       }
 
-      flushSkipStreak(position);
+      // First non-skipped user found
+      flushSkipStreak(rowNumber);
+      isInitialSkipPhase = false; 
 
       emit({
         type: "progress",
         level: "info",
         stage: "preparing",
-        message: `(${position}/${validUsers.length}) Preparing email for ${email}...`,
+        message: `[${position}/${validUsers.length}] Processing ${email} (Generating AI Content...)`,
         currentEmail: email,
         position,
         total: validUsers.length,
@@ -120,29 +113,22 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       });
 
       try {
-        emit({
-          type: "progress",
-          level: "info",
-          stage: "generating",
-          message: `Generating content for ${email}...`,
-          currentEmail: email,
-          position,
-          total: validUsers.length,
-          stats,
-        });
-
         const { subject, html } = await generateEmail(name);
 
         const sendResult = await sendEmailSafely(email, subject, html, {
-          onEvent: (mailEvent) =>
-            emit({
-              type: "progress",
-              ...mailEvent,
-              currentEmail: email,
-              position,
-              total: validUsers.length,
-              stats,
-            }),
+          onEvent: (mailEvent) => {
+            // Only emit if it's not a wait message (we handle timer separately)
+            if (mailEvent.level !== "wait") {
+              emit({
+                type: "progress",
+                ...mailEvent,
+                currentEmail: email,
+                position,
+                total: validUsers.length,
+                stats,
+              });
+            }
+          },
           shouldStop,
         });
 
@@ -159,7 +145,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         emit({
           type: "progress",
           level: "success",
-          message: `Marked ${email} as Sent (Row ${rowNumber})`,
+          message: `Successfully dispatched to ${email} (Row ${rowNumber})`,
           currentEmail: email,
           position,
           total: validUsers.length,
