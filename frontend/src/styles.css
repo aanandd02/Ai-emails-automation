@@ -92,7 +92,16 @@ body {
 }
 
 .logo-section { display: flex; align-items: center; gap: 1rem; }
-.logo-icon { width: 42px; height: 42px; filter: drop-shadow(0 0 8px var(--accent-soft)); }
+.logo-icon { 
+  width: 42px; 
+  height: 42px; 
+  filter: drop-shadow(0 0 8px var(--accent-soft)); 
+}
+.logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 .logo-text h1 { margin: 0; font-size: 1.25rem; font-weight: 700; background: linear-gradient(to right, var(--text-main), var(--text-dim)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .logo-text p { margin: 0; font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); }
 
