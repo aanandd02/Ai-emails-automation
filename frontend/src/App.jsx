@@ -287,21 +287,22 @@ function App() {
             <img src="/logo.png" alt="AI HR Automation Logo" className="logo-img" />
           </div>
           <div className="logo-text">
-            <h1>HR Automation</h1>
-            <p>Admin Control Center</p>
+            <h1>HR Mailer</h1>
           </div>
         </div>
         <div className="header-actions">
-          {!backendAlive && <span className="status-pill" style={{ background: 'rgba(244, 63, 94, 0.2)', color: 'var(--danger)' }}>Backend Offline</span>}
+          {!backendAlive && <span className="status-pill status-offline">Offline</span>}
           
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme">
             {theme === "dark" ? "☼" : "☾"}
           </button>
 
           <div className={`status-pill ${appState.isRunning ? 'status-running' : 'status-idle'}`}>
-            {appState.isRunning ? 'Streaming Live' : 'System Idle'}
+            <span className="status-dot"></span>
+            <span className="status-label">{appState.isRunning ? 'Live' : 'Idle'}</span>
           </div>
-          <button className="btn btn-danger" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+          
+          <button className="btn btn-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>
@@ -310,7 +311,7 @@ function App() {
       <div className="dashboard-grid">
         <section className="card main-control">
           <div className="section-title">
-            <h2>System Control</h2>
+            <h2>Command Console</h2>
           </div>
           
           <div className="control-row">
@@ -320,14 +321,14 @@ function App() {
                 onClick={startAutomation} 
                 disabled={appState.isRunning}
               >
-                <span style={{ fontSize: '0.8rem' }}>▶</span> Start Run
+                Start Session
               </button>
               <button 
                 className="btn btn-danger" 
                 onClick={stopAutomation} 
                 disabled={!appState.isRunning}
               >
-                <span style={{ fontSize: '0.8rem' }}>■</span> Stop Run
+                Stop Session
               </button>
             </div>
           </div>
@@ -358,7 +359,7 @@ function App() {
 
         <section className="card stats-panel">
           <div className="section-title">
-            <h2>Analytics</h2>
+            <h2>Real-time Stats</h2>
           </div>
           <div className="stats-grid">
             <div className="stat-item">
@@ -378,14 +379,14 @@ function App() {
               <span className="stat-value danger">{appState.stats.failed}</span>
             </div>
           </div>
-          <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'right' }}>
+          <div className="updated-at">
             {updatedAt}
           </div>
         </section>
 
         <section className="card full-width">
           <div className="section-title">
-            <h2>Activity & Success Stream</h2>
+            <h2>Activity Stream</h2>
           </div>
           <div className="activity-feed">
             <div className="log-viewer">
