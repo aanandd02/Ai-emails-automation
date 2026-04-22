@@ -243,14 +243,9 @@ function App() {
           <div className="glow-circle glow-2"></div>
         </div>
         <main className="card auth-card">
-          <div className="logo-section">
-            <div className="logo-icon">
-              <img src="/logo.png" alt="AI HR Automation Logo" className="logo-img" />
-            </div>
-            <div className="logo-text">
-              <h1>HR Mailer</h1>
-              <p>Authentication Required</p>
-            </div>
+          <div className="logo-text">
+            <h1>Automation</h1>
+            <p>Authentication Required</p>
           </div>
           <form className="auth-form" onSubmit={handleLogin}>
             <div className="input-group">
@@ -282,13 +277,8 @@ function App() {
       </div>
 
       <header className="app-header">
-        <div className="logo-section">
-          <div className="logo-icon">
-            <img src="/logo.png" alt="AI HR Automation Logo" className="logo-img" />
-          </div>
-          <div className="logo-text">
-            <h1>HR Mailer</h1>
-          </div>
+        <div className="logo-text">
+          <h1>Automation</h1>
         </div>
         <div className="header-actions">
           {!backendAlive && <span className="status-pill status-offline">Offline</span>}
@@ -351,7 +341,7 @@ function App() {
             <div className="stat-item">
               <span className="stat-label">Wait Timer</span>
               <span className={`stat-value ${!liveWaitSeconds && appState.isRunning ? 'status-text' : ''}`}>
-                {liveWaitSeconds ? `${liveWaitSeconds}s` : (appState.isRunning ? "Generating..." : "--")}
+                {liveWaitSeconds ? `${liveWaitSeconds}s` : (appState.isRunning ? `Generating for ${appState.currentEmail || "..."}` : "--")}
               </span>
             </div>
           </div>
