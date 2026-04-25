@@ -35,7 +35,7 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [viewMode, setViewMode] = useState("dashboard"); // dashboard | activity
-  const [backendAlive, setBackendAlive] = useState(true);
+  const [backendAlive, setBackendAlive] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const [liveWaitSeconds, setLiveWaitSeconds] = useState(null);
@@ -52,23 +52,24 @@ function App() {
 
   // Initialize and check health
   useEffect(() => {
-    let retryCount = 0;
     const checkHealth = async () => {
       try {
         const res = await fetch(`${apiBase}/health`);
         if (res.ok) {
-          setIsInitializing(false);
           setBackendAlive(true);
+          setIsInitializing(false);
         } else {
           throw new Error();
         }
       } catch (err) {
-        retryCount++;
-        // Keep retrying during cold start
-        setTimeout(checkHealth, 2000);
+        setBackendAlive(false);
+        setIsInitializing(false);
       }
     };
+    
     checkHealth();
+    const interval = setInterval(checkHealth, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const authorizedFetch = useCallback(
@@ -231,6 +232,27 @@ function App() {
              <div className="loader-progress-inner"></div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!backendAlive) {
+    return (
+      <div className="auth-wrapper fade-in">
+        <div className="glow-container">
+          <div className="glow-circle glow-1"></div>
+          <div className="glow-circle glow-2"></div>
+        </div>
+        <main className="card auth-card" style={{ textAlign: 'center' }}>
+          <div className="logo-text">
+            <h1>System Offline</h1>
+            <p style={{ color: 'var(--danger)', marginTop: '0.5rem', fontWeight: 'bold' }}>Backend Connection Required</p>
+          </div>
+          <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+             <div className="loader-spinner" style={{ width: '32px', height: '32px', borderTopColor: 'var(--danger)' }}></div>
+             <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Waiting for the server to start...</p>
+          </div>
+        </main>
       </div>
     );
   }
