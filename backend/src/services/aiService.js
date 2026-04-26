@@ -72,17 +72,35 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
     resume:
       "https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view?usp=sharing",
   };
-
   try {
     logger.info(`🤖 Using Groq model: ${MODEL}`);
     logger.info(`👤 Recipient: ${recipientName || "unknown"}`);
 
-    const completion = await groq.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.75,
-      max_tokens: 250,
-    });
+    let completion;
+    let retries = 3;
+    let backoff = 5000; // start with 5s delay
+
+    while (retries >= 0) {
+      try {
+        completion = await groq.chat.completions.create({
+          model: MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.75,
+          max_tokens: 250,
+        });
+        break; // Success
+      } catch (error) {
+        // Groq rate limit is usually 429 Too Many Requests
+        if (error.status === 429 && retries > 0) {
+          logger.warn(`⚠️ Groq API rate limit reached. Retrying in ${backoff/1000}s...`);
+          await new Promise((resolve) => setTimeout(resolve, backoff));
+          retries--;
+          backoff *= 2;
+        } else {
+          throw error;
+        }
+      }
+    }
 
     const text = completion.choices[0].message.content;
 
@@ -94,7 +112,8 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
     };
   } catch (error) {
     logger.error("❌ Groq generation failed:", error.message);
-    throw new Error("Email content generation failed");
+    // Include error message to make it visible in logs
+    throw new Error(`Email content generation failed: ${error.message}`);
   }
 }
 

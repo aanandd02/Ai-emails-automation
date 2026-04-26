@@ -69,15 +69,24 @@ export async function readGoogleSheetData() {
   }));
 }
 
-export async function updateStatusInGoogleSheet(rowIndex, status) {
+export async function updateStatusInGoogleSheet(rowIndex, status, retries = 3, backoff = 2000) {
   const range = `${SHEET_NAME}!C${rowIndex}`;
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: GOOGLE_SHEET_ID,
-    range,
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [[status]],
-    },
-  });
-  logger.info(`📝 Sheet updated → Row ${rowIndex}, Status: ${status}`);
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range,
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [[status]],
+      },
+    });
+    logger.info(`📝 Sheet updated → Row ${rowIndex}, Status: ${status}`);
+  } catch (error) {
+    if (error.code === 429 && retries > 0) {
+      logger.warn(`⚠️ Google Sheets API rate limit exceeded. Retrying in ${backoff}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+      return updateStatusInGoogleSheet(rowIndex, status, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
 }

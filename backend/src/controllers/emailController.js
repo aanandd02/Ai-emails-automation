@@ -185,6 +185,31 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         });
 
         await updateStatusInGoogleSheet(rowNumber, "Failed");
+        
+        // Wait briefly after a failure to avoid hitting rate limits on rapid failures
+        if (position < validUsers.length) {
+          emit({
+            type: "progress",
+            level: "info",
+            message: `Waiting 5s after failure before continuing...`,
+            currentEmail: email,
+            position,
+            total: validUsers.length,
+            stats,
+          });
+          await waitWithCountdown(5, {
+            onEvent: (mailEvent) =>
+              emit({
+                type: "progress",
+                ...mailEvent,
+                currentEmail: email,
+                position,
+                total: validUsers.length,
+                stats,
+              }),
+            shouldStop,
+          });
+        }
       }
     }
 
