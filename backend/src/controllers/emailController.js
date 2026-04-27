@@ -172,6 +172,35 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           throw err;
         }
 
+        if (err.isRateLimit) {
+          emit({
+            type: "progress",
+            level: "warn",
+            message: `Rate limit hit. Waiting ${err.waitSeconds}s before retrying ${email}...`,
+            currentEmail: email,
+            position,
+            total: validUsers.length,
+            stats,
+          });
+
+          await waitWithCountdown(err.waitSeconds, {
+            onEvent: (mailEvent) =>
+              emit({
+                type: "progress",
+                ...mailEvent,
+                currentEmail: email,
+                position,
+                total: validUsers.length,
+                stats,
+              }),
+            shouldStop,
+          });
+
+          // Decrement i to retry the same user on the next iteration
+          i--;
+          continue;
+        }
+
         stats.failed += 1;
         stats.processed += 1;
         emit({

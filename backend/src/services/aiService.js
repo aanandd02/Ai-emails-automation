@@ -91,11 +91,22 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
         break; // Success
       } catch (error) {
         // Groq rate limit is usually 429 Too Many Requests
-        if (error.status === 429 && retries > 0) {
-          logger.warn(`⚠️ Groq API rate limit reached. Retrying in ${backoff/1000}s...`);
-          await new Promise((resolve) => setTimeout(resolve, backoff));
-          retries--;
-          backoff *= 2;
+        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+          const errMsg = error.message || JSON.stringify(error);
+          let waitSeconds = backoff / 1000;
+          const match = errMsg.match(/try again in (?:(\d+)m)?([\d.]+)s/);
+          if (match) {
+            const minutes = parseInt(match[1] || '0', 10);
+            const seconds = parseFloat(match[2] || '0');
+            waitSeconds = Math.ceil(minutes * 60 + seconds) + 5; // 5s buffer
+          } else {
+            backoff *= 2;
+          }
+          
+          const rlError = new Error(errMsg);
+          rlError.isRateLimit = true;
+          rlError.waitSeconds = waitSeconds;
+          throw rlError;
         } else {
           throw error;
         }
@@ -112,6 +123,9 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
     };
   } catch (error) {
     logger.error("❌ Groq generation failed:", error.message);
+    if (error.isRateLimit) {
+      throw error;
+    }
     // Include error message to make it visible in logs
     throw new Error(`Email content generation failed: ${error.message}`);
   }
