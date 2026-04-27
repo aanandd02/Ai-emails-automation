@@ -259,12 +259,14 @@ body {
   transform: translateY(1px);
 }
 .btn-danger { 
-  background: rgba(239, 68, 68, 0.1); 
-  color: var(--danger); 
-  border-color: rgba(239, 68, 68, 0.2); 
+  background: var(--danger); 
+  color: #ffffff; 
+  border-color: var(--danger); 
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
 }
 .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: #dc2626;
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
   transform: translateY(-1px);
 }
 .btn-logout { 
@@ -310,7 +312,7 @@ body {
 }
 .stat-label { font-size: 0.65rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); word-break: break-word; overflow-wrap: break-word; letter-spacing: -0.02em; }
-.email-value { font-size: 1rem; font-weight: 600; word-break: break-all; overflow-wrap: break-word; line-height: 1.2; color: var(--accent-primary); }
+.email-value { font-size: 1rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: block; line-height: 1.2; color: var(--accent-primary); }
 .status-text { font-size: 0.9rem; font-weight: 600; color: var(--accent-primary); word-break: break-word; }
 .danger { color: var(--danger); }
 
@@ -344,12 +346,12 @@ body {
   border: 1px solid var(--glass-border); 
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
-.log-viewer { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--log-text); line-height: 1.5; word-break: break-all; overflow-wrap: break-word; }
-.log-viewer div { padding: 0.2rem 0; border-bottom: 1px dashed var(--glass-border); }
+.log-viewer { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #0f172a !important; color: #22c55e !important; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; }
+.log-viewer div { padding: 0.2rem 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.08); }
 .log-viewer div:last-child { border-bottom: none; }
 
 .sent-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--glass-border); font-size: 0.8rem; font-weight: 500; gap: 0.5rem; }
-.sent-item span:first-child { word-break: break-all; flex: 1; color: var(--text-main); }
+.sent-item span:first-child { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; flex: 1; color: var(--text-main); }
 .sent-item span:last-child { font-size: 0.75rem; font-weight: 600; color: var(--success); white-space: nowrap; background: rgba(34, 197, 94, 0.1); padding: 0.15rem 0.4rem; border-radius: 0.4rem; }
 .sent-item:last-child { border-bottom: none; }
 
