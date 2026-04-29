@@ -17,7 +17,7 @@ View my resume: https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW
     });
 
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Email sending timed out after 15 seconds")), 15000);
+      setTimeout(() => reject(new Error("Email sending timed out after 60 seconds")), 60000);
     });
 
     await Promise.race([mailPromise, timeoutPromise]);
