@@ -82,12 +82,22 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
 
     while (retries >= 0) {
       try {
-        completion = await groq.chat.completions.create({
+        const fetchPromise = groq.chat.completions.create({
           model: MODEL,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.75,
           max_tokens: 250,
         });
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            const err = new Error("Groq API timeout");
+            err.status = 408;
+            reject(err);
+          }, 15000);
+        });
+
+        completion = await Promise.race([fetchPromise, timeoutPromise]);
         break; // Success
       } catch (error) {
         // Groq rate limit is usually 429 Too Many Requests
@@ -108,7 +118,12 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
           rlError.waitSeconds = waitSeconds;
           throw rlError;
         } else {
-          throw error;
+          retries--;
+          if (retries < 0) {
+            throw error;
+          }
+          logger.warn(`Groq API error (${error.message}). Retries left: ${retries}`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
     }
