@@ -178,7 +178,7 @@ function App() {
           }
 
           if (event.phase) {
-            newState.isRunning = event.phase === "running";
+            newState.isRunning = event.phase === "running" || event.phase === "stopping";
             newState.stopRequested = event.phase === "stopping";
           }
           return newState;

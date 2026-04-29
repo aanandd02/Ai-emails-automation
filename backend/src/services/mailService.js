@@ -8,13 +8,19 @@ export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
 View my resume: https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view?usp=sharing`;
 
   try {
-    await transporter.sendMail({
+    const mailPromise = transporter.sendMail({
       from: `"Anand Shukla" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       html: htmlContent,
       text: plainText,
     });
+
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Email sending timed out after 15 seconds")), 15000);
+    });
+
+    await Promise.race([mailPromise, timeoutPromise]);
   } catch (error) {
     throw new Error(`Failed to send email to ${to}: ${error.message}`);
   }
