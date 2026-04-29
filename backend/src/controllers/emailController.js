@@ -114,6 +114,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
 
       try {
         const { subject, html } = await generateEmail(name);
+        ensureNotStopped();
 
         const sendResult = await sendEmailSafely(email, subject, html, {
           onEvent: (mailEvent) => {
