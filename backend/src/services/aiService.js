@@ -22,44 +22,27 @@ export async function generateUniqueSubject() {
   return SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
 }
 
-export async function generateEmail(recipientName = "") {
-  const style = STYLES[Math.floor(Math.random() * STYLES.length)];
+export async function generateEmail(recipientName = "", companyName = "your company") {
   const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
-  const nameContext = recipientName
-    ? `The recipient's name is ${recipientName}. The greeting "Hi ${recipientName}," is already added — do NOT use their name anywhere inside the email body.`
-    : "No recipient name provided. Use a general but professional tone.";
-
+  
   const prompt = `
-Write a SHORT, PROFESSIONAL cold email body (MAX 80 WORDS) for a Software Development Engineer (SDE-1) job application.
+Write an email body matching this EXACT format. 
 
-Follow this structure:
-Sentence 1 — Intro: Start with "I'm Anand, a final-year ECE student at IIIT Nagpur" and mention LeetCode Knight (top 2.44% globally, rating 2006).
-Sentence 2 & 3 — Work Experience: Highlight your Backend Internship experience at <b>Synup</b> and/or <b>BrandX</b>. Mention specific roles like "Backend Engineer Intern" and include high-impact tech (AWS Lambda, MySQL, Node.js, MongoDB).
-Sentence 4 — Closing: A short, natural sentence expressing interest in connecting for SDE-1 opportunities. The resume and portfolio are already linked in the signature.
+Company Name: ${companyName}
 
-Hard Rules:
-- CRITICAL: Do NOT start with "Hi", "Hello", or any greeting — greeting is already added above this body
-- Do NOT write "I'm Anand Shukla" — use only "I'm Anand"
-- Do NOT mention any specific company being applied to
-- Mention <b>Synup</b> and <b>BrandX</b> prominently if possible.
-- Use <b> tags for company names.
-- Keep it flowy and human, not like a template.
-- Tone: ${style}
-- ${nameContext}
+INSTRUCTIONS:
+1. Generate a single SHORT, professional sentence to replace "[AI_COMPLIMENT]" about the company's work (e.g. "the work you all are doing at the intersection of AI and tech staffing is genuinely exciting."). If the company name is very generic (like "your company"), just write "the work you are doing is genuinely exciting."
+2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown backticks. Do NOT wrap it in HTML paragraphs, just use <br> for line breaks and keep the bullet points exactly as shown.
 
-Detailed Work Experience for Reference:
-
-1. **Synup** (Backend Engineer Intern | 6 months):
-   - Tracked and fixed production race conditions in event-driven AWS Lambda pipelines.
-   - Optimized MySQL transactions for high-concurrency services.
-   - Key Achievement: Reduced pipeline failure rate by 40%.
-
-2. **BrandX** (Backend Developer Intern):
-   - Built atomic reservation logic for a high-traffic booking platform (Kumbh Mela project).
-   - Tech: Node.js, MongoDB, REST APIs.
-   - Key Achievement: Improved API response times by 35% under peak load.
-
-Output only the email body plain HTML fragment — no markdown, no backticks, no commentary.
+I came across your profile while exploring opportunities at ${companyName} - [AI_COMPLIMENT]
+<br><br>
+I'm Anand, a final-year ECE student at IIIT Nagpur with backend engineering experience across two internships:
+<br><br>
+• Backend Intern at Synup - optimized MySQL transactions and built atomic reservation logic (Node.js, AWS Lambda)<br>
+• Backend Intern at BrandX - worked on MongoDB-based data pipelines<br>
+• LeetCode Knight - Global top 2.44%, rating 2006
+<br><br>
+I'm actively looking for SDE-1 roles and would love to explore if there's a fit at ${companyName} or with any of your client companies. Would you be open to a quick 10-minute call?
 `;
 
 
@@ -112,7 +95,7 @@ Output only the email body plain HTML fragment — no markdown, no backticks, no
           } else {
             backoff *= 2;
           }
-          
+
           const rlError = new Error(errMsg);
           rlError.isRateLimit = true;
           rlError.waitSeconds = waitSeconds;

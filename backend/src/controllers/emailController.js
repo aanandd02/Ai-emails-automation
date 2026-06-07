@@ -99,7 +99,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
 
       // First non-skipped user found
       flushSkipStreak(rowNumber);
-      isInitialSkipPhase = false; 
+      isInitialSkipPhase = false;
 
       emit({
         type: "progress",
@@ -113,7 +113,19 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       });
 
       try {
-        const { subject, html } = await generateEmail(name);
+        let companyName = "your company";
+        if (email.includes("@")) {
+          const domain = email.split("@")[1].toLowerCase();
+          const genericDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"];
+          
+          if (!genericDomains.includes(domain)) {
+            // Simple extraction: synup.com -> Synup
+            let extracted = domain.split(".")[0];
+            companyName = extracted.charAt(0).toUpperCase() + extracted.slice(1);
+          }
+        }
+
+        const { subject, html } = await generateEmail(name, companyName);
         ensureNotStopped();
 
         const sendResult = await sendEmailSafely(email, subject, html, {
@@ -215,7 +227,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         });
 
         await updateStatusInGoogleSheet(rowNumber, "Failed");
-        
+
         // Wait briefly after a failure to avoid hitting rate limits on rapid failures
         if (position < validUsers.length) {
           emit({
