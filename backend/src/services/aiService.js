@@ -32,16 +32,16 @@ Company Name: ${companyName}
 
 INSTRUCTIONS:
 1. Generate a single SHORT, professional sentence to replace "[AI_COMPLIMENT]" about the company's work (e.g. "the work you all are doing at the intersection of AI and tech staffing is genuinely exciting."). If the company name is very generic (like "your company"), just write "the work you are doing is genuinely exciting."
-2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown backticks. Do NOT wrap it in HTML paragraphs, just use <br> for line breaks and keep the bullet points exactly as shown.
+2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown backticks. Do NOT use HTML tags.
 
 I came across your profile while exploring opportunities at ${companyName} - [AI_COMPLIMENT]
-<br><br>
+
 I'm Anand, a final-year ECE student at IIIT Nagpur with backend engineering experience across two internships:
-<br><br>
-• Backend Intern at Synup - optimized MySQL transactions and built atomic reservation logic (Node.js, AWS Lambda)<br>
-• Backend Intern at BrandX - worked on MongoDB-based data pipelines<br>
+
+• Backend Intern at Synup - optimized MySQL transactions and built atomic reservation logic (Node.js, AWS Lambda)
+• Backend Intern at BrandX - worked on MongoDB-based data pipelines
 • LeetCode Knight - Global top 2.44%, rating 2006
-<br><br>
+
 I'm actively looking for SDE-1 roles and would love to explore if there's a fit at ${companyName} or with any of your client companies. Would you be open to a quick 10-minute call?
 `;
 
@@ -137,6 +137,7 @@ function buildBeautifulTemplate(
   const body = emailText
     .replace(/```[\s\S]*?```/g, "")
     .replace(/`/g, "")
+    .replace(/\r/g, "")
     .replace(/\n{2,}/g, "<br><br>")
     .replace(/\n/g, "<br>")
     .trim();
