@@ -1,7 +1,6 @@
-import { groq } from "../config/groqConfig.js";
 import logger from "../utils/logger.js";
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "gemini-flash-latest";
 
 const STYLES = [
   "confident and concise",
@@ -56,62 +55,85 @@ I'm actively looking for SDE-1 roles and would love to explore if there's a fit 
       "https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view?usp=sharing",
   };
   try {
-    logger.info(`🤖 Using Groq model: ${MODEL}`);
+    logger.info(`🤖 Using Gemini model: ${MODEL}`);
     logger.info(`👤 Recipient: ${recipientName || "unknown"}`);
 
-    let completion;
+    let text = "";
     let retries = 3;
-    let backoff = 5000; // start with 5s delay
+    let backoff = 10000; // start with 10s delay
 
     while (retries >= 0) {
       try {
-        const fetchPromise = groq.chat.completions.create({
-          model: MODEL,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.75,
-          max_tokens: 250,
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error("GEMINI_API_KEY is missing in environment variables.");
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+        
+        const fetchPromise = fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-goog-api-key': apiKey
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.75,
+              maxOutputTokens: 1500,
+            }
+          })
         });
 
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => {
-            const err = new Error("Groq API timeout");
+            const err = new Error("Gemini API timeout");
             err.status = 408;
             reject(err);
           }, 15000);
         });
 
-        completion = await Promise.race([fetchPromise, timeoutPromise]);
-        break; // Success
-      } catch (error) {
-        // Groq rate limit is usually 429 Too Many Requests
-        if (error.status === 429 || (error.message && error.message.includes('429'))) {
-          const errMsg = error.message || JSON.stringify(error);
-          let waitSeconds = backoff / 1000;
-          const match = errMsg.match(/try again in (?:(\d+)m)?([\d.]+)s/);
-          if (match) {
-            const minutes = parseInt(match[1] || '0', 10);
-            const seconds = parseFloat(match[2] || '0');
-            waitSeconds = Math.ceil(minutes * 60 + seconds) + 5; // 5s buffer
-          } else {
-            backoff *= 2;
-          }
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          const errorMsg = errData?.error?.message || `HTTP Error: ${response.status}`;
+          const err = new Error(errorMsg);
+          err.status = response.status;
+          throw err;
+        }
 
-          const rlError = new Error(errMsg);
+        const data = await response.json();
+        
+        if (data && data.candidates && data.candidates.length > 0) {
+          text = data.candidates[0].content.parts[0].text;
+          break; // Success
+        } else {
+          throw new Error("Unexpected API response format.");
+        }
+
+      } catch (error) {
+        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+          let waitSeconds = backoff / 1000;
+          const rlError = new Error("Gemini API rate limit exceeded");
           rlError.isRateLimit = true;
           rlError.waitSeconds = waitSeconds;
-          throw rlError;
+          
+          backoff *= 2; // exponential backoff for next iteration if loop wasn't broken by throwing
+          
+          // Controller expects error thrown so it can pause queue execution.
+          throw rlError; 
         } else {
           retries--;
           if (retries < 0) {
             throw error;
           }
-          logger.warn(`Groq API error (${error.message}). Retries left: ${retries}`);
+          logger.warn(`Gemini API error (${error.message}). Retries left: ${retries}`);
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
     }
-
-    const text = completion.choices[0].message.content;
 
     logger.info("✅ Email generated");
 
@@ -120,11 +142,10 @@ I'm actively looking for SDE-1 roles and would love to explore if there's a fit 
       html: buildBeautifulTemplate(greeting, text, { myName, ...contact }),
     };
   } catch (error) {
-    logger.error("❌ Groq generation failed:", error.message);
+    logger.error("❌ Gemini generation failed:", error.message);
     if (error.isRateLimit) {
       throw error;
     }
-    // Include error message to make it visible in logs
     throw new Error(`Email content generation failed: ${error.message}`);
   }
 }

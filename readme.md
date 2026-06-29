@@ -1,9 +1,9 @@
 # AI HR Email Automation
 
-Automates personalized job outreach emails using Google Sheets, Groq LLM, and Gmail with duplicate protection.
+Automates personalized job outreach emails using Google Sheets, Gemini LLM, and Gmail with duplicate protection.
 
 ## Stack
-- Backend: Node.js (ESM), Express, Groq SDK, Google Sheets API, Nodemailer, dotenv
+- Backend: Node.js (ESM), Express, Gemini REST API, Google Sheets API, Nodemailer, dotenv
 - Frontend: React + Vite
 
 ## Quickstart
@@ -16,7 +16,7 @@ Create `backend/.env`:
 ```env
 GMAIL_USER=your_email@gmail.com
 GMAIL_APP_PASS=your_gmail_app_password
-GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
 GOOGLE_SHEET_ID=your_google_sheet_id
 GOOGLE_SHEET_NAME=Sheet1
 BASIC_AUTH_USER=your_username
@@ -45,7 +45,7 @@ Use the BASIC_AUTH_USER / BASIC_AUTH_PASS you set in `backend/.env`.
 ## How it works
 1. Reads rows from Google Sheet (A:C).  
 2. Skips rows whose sheet status is `Sent`.  
-3. Groq generates subject + HTML body.  
+3. Gemini generates subject + HTML body.  
 4. Sends via Gmail App Password.  
 5. Updates sheet status to `Sent` or `Failed`, waits with human-like delays.  
 
