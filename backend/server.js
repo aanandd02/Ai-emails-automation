@@ -4,6 +4,8 @@ import cors from "cors";
 import automationRoutes from "./src/routes/automationRoutes.js";
 import logger from "./src/utils/logger.js";
 import { loginHandler, logoutHandler, requireAuth } from "./src/middleware/auth.js";
+import { automationRunner } from "./src/runner/automationRunner.js";
+
 
 console.log("All imports done");
 
@@ -43,16 +45,18 @@ app.listen(PORT, () => {
 // Keep event loop alive
 setInterval(() => { }, 3600000);
 
-// Self-ping to prevent Render free plan from sleeping during automation
-// Render sleeps after 15 minutes of inactivity — we ping every 10 minutes
+// Self-ping to prevent Render free plan from sleeping DURING automation
+// Only pings when automation is actually running (not 24/7)
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 setInterval(async () => {
+  if (!automationRunner.isRunning) return; // Only ping when automation is active
   try {
     await fetch(`${RENDER_URL}/health`);
-    logger.info("Self-ping: server kept awake");
+    logger.info("Self-ping: server kept awake during automation");
   } catch (err) {
-    // Silent fail — if server is restarting, that's fine
+    // Silent fail
   }
 }, 10 * 60 * 1000); // Every 10 minutes
+
 
