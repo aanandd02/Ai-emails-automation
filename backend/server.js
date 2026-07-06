@@ -42,3 +42,17 @@ app.listen(PORT, () => {
 
 // Keep event loop alive
 setInterval(() => { }, 3600000);
+
+// Self-ping to prevent Render free plan from sleeping during automation
+// Render sleeps after 15 minutes of inactivity — we ping every 10 minutes
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
+setInterval(async () => {
+  try {
+    await fetch(`${RENDER_URL}/health`);
+    logger.info("Self-ping: server kept awake");
+  } catch (err) {
+    // Silent fail — if server is restarting, that's fine
+  }
+}, 10 * 60 * 1000); // Every 10 minutes
+
