@@ -29,11 +29,6 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [sentItems, setSentItems] = useState([]);
   const [updatedAt, setUpdatedAt] = useState("System Standby");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [token, setToken] = useState(() => localStorage.getItem("authToken") || "");
-  const [authError, setAuthError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [viewMode, setViewMode] = useState("dashboard"); // dashboard | activity
   const [backendAlive, setBackendAlive] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -48,7 +43,6 @@ function App() {
 
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
 
-  const isAuthed = Boolean(token);
 
   // Initialize and check health
   useEffect(() => {
@@ -76,11 +70,10 @@ function App() {
     (path, options = {}) => {
       const headers = {
         ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
       return fetch(`${apiBase}${path}`, { ...options, headers });
     },
-    [token]
+    []
   );
 
   const progress = useMemo(() => {
@@ -107,15 +100,10 @@ function App() {
 
   // Sync state from backend
   useEffect(() => {
-    if (!isAuthed) return;
 
     const checkStatus = async () => {
       try {
         const res = await authorizedFetch("/api/status");
-        if (res.status === 401) {
-          handleLogout();
-          return;
-        }
         const data = await res.json();
         setAppState(prev => ({ ...prev, ...data }));
         setBackendAlive(true);
@@ -127,7 +115,7 @@ function App() {
     checkStatus();
     const timer = setInterval(checkStatus, 5000);
     return () => clearInterval(timer);
-  }, [isAuthed, authorizedFetch]);
+  }, [authorizedFetch]);
 
   // Smooth Frontend Countdown (Isolated)
   useEffect(() => {
@@ -150,9 +138,7 @@ function App() {
 
   // Event Stream (SSE)
   useEffect(() => {
-    if (!isAuthed) return;
-
-    const stream = new EventSource(`${apiBase}/api/events?token=${encodeURIComponent(token)}`);
+    const stream = new EventSource(`${apiBase}/api/events`);
     
     stream.onmessage = (e) => {
       const event = JSON.parse(e.data);
@@ -191,30 +177,8 @@ function App() {
     };
 
     return () => stream.close();
-  }, [isAuthed, token, appendLog, addSentItem]);
+  }, [appendLog, addSentItem]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthError("");
-    try {
-      const res = await fetch(`${apiBase}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      if (res.status === 401) throw new Error("Invalid credentials");
-      const data = await res.json();
-      setToken(data.token);
-      localStorage.setItem("authToken", data.token);
-    } catch (err) {
-      setAuthError(err.message);
-    }
-  };
-
-  const handleLogout = () => {
-    setToken("");
-    localStorage.removeItem("authToken");
-  };
 
   const startAutomation = () => authorizedFetch("/api/start", { method: "POST" });
   const stopAutomation = () => authorizedFetch("/api/stop", { method: "POST" });
@@ -257,39 +221,6 @@ function App() {
     );
   }
 
-  if (!isAuthed) {
-    return (
-      <div className="auth-wrapper fade-in">
-        <div className="glow-container">
-          <div className="glow-circle glow-1"></div>
-          <div className="glow-circle glow-2"></div>
-        </div>
-        <main className="card auth-card">
-          <div className="logo-text">
-            <h1>Automation</h1>
-            <p>Authentication Required</p>
-          </div>
-          <form className="auth-form" onSubmit={handleLogin}>
-            <div className="input-group">
-              <label>Username</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
-            </div>
-            <div className="input-group">
-              <label>Password</label>
-              <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required />
-            </div>
-            {authError && <div className="error-bg">{authError}</div>}
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Login to Console</button>
-            <div className="auth-footer">
-               <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '0.8rem' }}>
-                  {showPassword ? "Hide" : "Show"} Password
-               </button>
-            </div>
-          </form>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="app-container fade-in">
@@ -313,10 +244,6 @@ function App() {
             <span className="status-dot"></span>
             <span className="status-label">{appState.isRunning ? 'Live' : 'Idle'}</span>
           </div>
-          
-          <button className="btn btn-logout" onClick={handleLogout}>
-            Logout
-          </button>
         </div>
       </header>
 

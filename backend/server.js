@@ -26,12 +26,8 @@ app.use(
 
 app.use(express.json());
 
-// Public auth endpoints
-app.post("/api/login", loginHandler);
-app.post("/api/logout", logoutHandler);
-
-// Protected automation APIs
-app.use("/api", requireAuth, automationRoutes);
+// Protected automation APIs (Auth removed)
+app.use("/api", automationRoutes);
 
 app.get("/", (_req, res) => {
   res.json({ status: "running", message: "AI Email Automation API is active", healthCheck: "/health" });

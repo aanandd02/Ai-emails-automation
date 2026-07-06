@@ -4,7 +4,7 @@ const USERNAME = process.env.BASIC_AUTH_USER;
 const PASSWORD = process.env.BASIC_AUTH_PASS;
 
 if (!USERNAME || !PASSWORD) {
-  throw new Error("Missing BASIC_AUTH_USER or BASIC_AUTH_PASS env vars");
+  console.log("No auth configured.");
 }
 
 // Generate a secret key for token validation derived from credentials
