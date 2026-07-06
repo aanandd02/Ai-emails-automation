@@ -1,4 +1,4 @@
-import transporter from "../config/mailConfig.js";
+
 
 export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
   const { onEvent } = options;
@@ -8,12 +8,26 @@ export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
 View my resume: https://drive.google.com/file/d/1tppKMCDPsWeHdtFIaMD-jWEUdVSz9hW-/view?usp=sharing`;
 
   try {
-    const mailPromise = transporter.sendMail({
-      from: `"Anand Shukla" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html: htmlContent,
-      text: plainText,
+    const gasUrl = process.env.GAS_WEB_APP_URL;
+    if (!gasUrl) {
+      throw new Error("GAS_WEB_APP_URL environment variable is missing.");
+    }
+
+    const mailPromise = fetch(gasUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to,
+        subject,
+        html: htmlContent,
+        text: plainText,
+      }),
+    }).then(async (res) => {
+      if (!res.ok) {
+         const errText = await res.text();
+         throw new Error(`GAS error: ${res.status} - ${errText}`);
+      }
+      return res.json();
     });
 
     const timeoutPromise = new Promise((_, reject) => {
