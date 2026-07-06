@@ -10,11 +10,11 @@ const STYLES = [
 ];
 
 const SUBJECTS = [
-  "SDE-1 Opening | LeetCode Knight (Rating 2006) | AWS & Backend Engineer",
-  "Backend Engineer | LeetCode Knight (Top 2.44%) | AWS Serverless + Node.js",
-  "SDE-1 Application | AWS Lambda · Node.js · LeetCode Knight | Anand Shukla",
-  "Software Development Engineer | LeetCode Knight (2006) | IIIT Nagpur",
-  "SDE-1 Role | Serverless Microservices · Node.js · MongoDB | Anand Shukla",
+  "AI Engineer | RAG · AI Agents · LangChain · Node.js | LeetCode Knight (2006)",
+  "Backend + AI Engineer | LLMs · Vector DBs · AWS Serverless | Anand Shukla",
+  "AI Engineer (Backend) | RAG Pipelines · MCP · LangChain | IIIT Nagpur '26",
+  "SDE-1 / AI Engineer | AI Agents · Node.js · AWS Lambda | LeetCode Knight",
+  "Actively Exploring AI/Backend Roles | RAG · Agents · LangChain · Node.js",
 ];
 
 export async function generateUniqueSubject() {
@@ -67,13 +67,16 @@ INSTRUCTIONS:
 
 I came across your profile while exploring opportunities at ${companyName} - [AI_COMPLIMENT]
 
-I'm Anand, a final-year ECE student at IIIT Nagpur with backend engineering experience across two internships:
+I'm Anand, a recent graduate from IIIT Nagpur (2026) — I build backend systems and AI-powered products:
 
-• Backend Intern at Synup - optimized MySQL transactions and built atomic reservation logic (Node.js, AWS Lambda)
-• Backend Intern at BrandX - worked on MongoDB-based data pipelines
-• LeetCode Knight - Global top 2.44%, rating 2006
+• Backend Intern at Synup — optimized MySQL transactions, built atomic reservation logic (Node.js, AWS Lambda)
+• Backend Intern at BrandX — MongoDB-based data pipelines
+• Built RAG pipelines using LangChain, Vector DBs (embeddings + semantic search)
+• AI Agents with ReAct, Tool Calling, and Multi-agent workflows
+• Familiar with MCP (Model Context Protocol) for connecting LLMs to external tools
+• LeetCode Knight — Global top 2.44%, rating 2006
 
-I'm actively looking for SDE-1 roles and would love to explore if there's a fit at ${companyName} or with any of your client companies. Would you be open to a quick 10-minute call?
+I'm actively looking for AI Engineer / SDE-1 roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?
 `;
 
 
