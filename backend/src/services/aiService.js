@@ -194,8 +194,15 @@ function buildBeautifulTemplate(
   emailText,
   { myName, phone, email, portfolio, resume }
 ) {
-  const body = emailText
-    .replace(/```[\s\S]*?```/g, "")
+  let body = emailText;
+  
+  // Extract content if wrapped in code blocks
+  const codeBlockMatch = body.match(/```(?:html|markdown|text)?\n?([\s\S]*?)```/i);
+  if (codeBlockMatch) {
+    body = codeBlockMatch[1];
+  }
+
+  body = body
     .replace(/`/g, "")
     .replace(/\r/g, "")
     .replace(/\n{2,}/g, "<br><br>")
