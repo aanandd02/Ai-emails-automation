@@ -27,6 +27,17 @@ router.post("/stop", (_req, res) => {
   res.status(202).json(result);
 });
 
+// Endpoint for external cron services (e.g., cron-job.org)
+router.get("/trigger-cron", async (_req, res) => {
+  // Start automation with a limit of 100 emails
+  const result = await automationRunner.start({ limit: 100 });
+  if (!result.started) {
+    res.status(409).json(result);
+    return;
+  }
+  res.status(202).json(result);
+});
+
 router.get("/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");

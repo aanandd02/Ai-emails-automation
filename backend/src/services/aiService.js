@@ -21,6 +21,38 @@ export async function generateUniqueSubject() {
   return SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
 }
 
+async function generateWithGroq(prompt) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is missing in environment variables.");
+  }
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama3-8b-8192",
+      temperature: 0.75,
+      max_tokens: 1500
+    })
+  });
+  
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || `Groq HTTP Error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  if (data && data.choices && data.choices.length > 0) {
+    return data.choices[0].message.content;
+  }
+  throw new Error("Unexpected Groq API response format.");
+}
+
 export async function generateEmail(recipientName = "", companyName = "your company") {
   const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
   
@@ -115,15 +147,22 @@ I'm actively looking for SDE-1 roles and would love to explore if there's a fit 
 
       } catch (error) {
         if (error.status === 429 || (error.message && error.message.includes('429'))) {
-          let waitSeconds = backoff / 1000;
-          const rlError = new Error("Gemini API rate limit exceeded");
-          rlError.isRateLimit = true;
-          rlError.waitSeconds = waitSeconds;
-          
-          backoff *= 2; // exponential backoff for next iteration if loop wasn't broken by throwing
-          
-          // Controller expects error thrown so it can pause queue execution.
-          throw rlError; 
+          logger.warn(`Gemini rate limit hit. Falling back to Groq...`);
+          try {
+            text = await generateWithGroq(prompt);
+            logger.info("✅ Groq successfully generated text as fallback");
+            break; // Success with Groq
+          } catch (groqError) {
+            logger.error(`Groq fallback failed: ${groqError.message}`);
+            // If Groq also fails, we fall back to the original wait logic
+            let waitSeconds = backoff / 1000;
+            const rlError = new Error("Both Gemini and Groq (fallback) failed due to rate limit/errors");
+            rlError.isRateLimit = true;
+            rlError.waitSeconds = waitSeconds;
+            
+            backoff *= 2; // exponential backoff for next iteration
+            throw rlError;
+          }
         } else {
           retries--;
           if (retries < 0) {

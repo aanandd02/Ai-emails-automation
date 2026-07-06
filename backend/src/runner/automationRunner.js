@@ -85,7 +85,7 @@ class AutomationRunner extends EventEmitter {
     }
   }
 
-  async start() {
+  async start(options = {}) {
     if (this.isRunning) {
       return { started: false, reason: "Automation is already running" };
     }
@@ -119,6 +119,7 @@ class AutomationRunner extends EventEmitter {
       .then(({ sendEmailsFromGoogleSheet }) =>
         sendEmailsFromGoogleSheet({
           shouldStop,
+          limit: options.limit,
           onEvent: (event) => {
             this.syncStateFromEvent(event);
             this.emitUpdate(event.type ?? "progress", event);

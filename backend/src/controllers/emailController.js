@@ -6,7 +6,7 @@ import {
 } from "../services/googleSheetService.js";
 
 export async function sendEmailsFromGoogleSheet(options = {}) {
-  const { onEvent, shouldStop } = options;
+  const { onEvent, shouldStop, limit } = options;
   const stats = {
     totalRows: 0,
     validUsers: 0,
@@ -85,6 +85,17 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
 
     for (let i = 0; i < validUsers.length; i++) {
       ensureNotStopped();
+
+      if (limit && stats.sent >= limit) {
+        emit({
+          type: "status",
+          phase: "stopping",
+          level: "info",
+          message: `Limit of ${limit} emails reached. Stopping further sending.`,
+          stats,
+        });
+        break;
+      }
 
       const { name, email, status, rowNumber } = validUsers[i];
       const position = i + 1;

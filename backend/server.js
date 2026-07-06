@@ -1,8 +1,6 @@
-console.log("Starting server.js");
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-console.log("Imports done");
 import automationRoutes from "./src/routes/automationRoutes.js";
 import logger from "./src/utils/logger.js";
 import { loginHandler, logoutHandler, requireAuth } from "./src/middleware/auth.js";
@@ -37,12 +35,10 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-console.log("Calling app.listen...");
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
   logger.info(`API server running on http://localhost:${PORT}`);
 });
-console.log("app.listen called");
 
 // Keep event loop alive
-setInterval(() => {}, 3600000);
+setInterval(() => { }, 3600000);

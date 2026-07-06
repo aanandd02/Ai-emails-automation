@@ -1,12 +1,10 @@
 # Node / build
 node_modules/
-dist/
 *.log
 
 # Env & secrets
 .env
 backend/.env
-frontend/.env
 backend/src/config/google-credentials.json
 
 # Data
@@ -16,7 +14,6 @@ backend/data/*.csv
 backend/data/*.pdf
 
 # Vite / frontend
-frontend/dist/
 .vite
 
 # OS/editor
