@@ -53,6 +53,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       stats,
     });
 
+    let currentRateLimitBackoff = 10;
     let skipStreakCount = 0;
     let skipStreakStartPosition = 0;
     let skipStreakLastEmail = "";
@@ -155,6 +156,9 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         stats.sent += 1;
         stats.processed += 1;
 
+        // Reset rate limit backoff on successful AI generation & send
+        currentRateLimitBackoff = 10;
+
         emit({
           type: "progress",
           level: "success",
@@ -189,14 +193,14 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           emit({
             type: "progress",
             level: "warn",
-            message: `Rate limit hit. Waiting ${err.waitSeconds}s before retrying ${email}...`,
+            message: `Rate limit hit. Waiting ${currentRateLimitBackoff}s before retrying ${email}...`,
             currentEmail: email,
             position,
             total: validUsers.length,
             stats,
           });
 
-          await waitWithCountdown(err.waitSeconds, {
+          await waitWithCountdown(currentRateLimitBackoff, {
             onEvent: (mailEvent) =>
               emit({
                 type: "progress",
@@ -208,6 +212,9 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
               }),
             shouldStop,
           });
+
+          // Exponentially increase backoff for next rate limit (up to ~1 hour)
+          currentRateLimitBackoff = Math.min(currentRateLimitBackoff * 2, 3600);
 
           // Decrement i to retry the same user on the next iteration
           i--;
