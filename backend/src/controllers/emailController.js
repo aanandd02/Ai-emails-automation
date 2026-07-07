@@ -158,8 +158,19 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         });
 
         if (!sendResult.sent) {
-          stats.skipped += 1;
+          // sendResult.sent can be false only if email wasn't actually sent
+          stats.failed += 1;
           stats.processed += 1;
+          await updateStatusInGoogleSheet(rowNumber, "Failed");
+          emit({
+            type: "progress",
+            level: "error",
+            message: `Email not sent to ${email} — GAS returned sent=false`,
+            currentEmail: email,
+            position,
+            total: validUsers.length,
+            stats,
+          });
           continue;
         }
 
@@ -200,6 +211,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           throw err;
         }
 
+        // GAS quota/rate limit — use exponential backoff and retry same user
         if (err.isRateLimit) {
           emit({
             type: "progress",
