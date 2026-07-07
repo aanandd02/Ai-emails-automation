@@ -28,14 +28,14 @@ router.post("/stop", (_req, res) => {
 });
 
 // Endpoint for external cron services (e.g., cron-job.org)
+// Returns minimal plain-text response to avoid "output too large" errors
 router.get("/trigger-cron", async (_req, res) => {
-  // Start automation with a limit of 100 emails
   const result = await automationRunner.start({ limit: 100 });
   if (!result.started) {
-    res.status(409).json(result);
+    res.status(409).send("already_running");
     return;
   }
-  res.status(202).json(result);
+  res.status(202).send("started");
 });
 
 router.get("/events", (req, res) => {

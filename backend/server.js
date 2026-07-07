@@ -34,7 +34,7 @@ app.get("/", (_req, res) => {
 });
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, timestamp: new Date().toISOString() });
+  res.send("ok");
 });
 
 app.listen(PORT, () => {
