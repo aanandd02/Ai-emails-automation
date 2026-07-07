@@ -56,24 +56,11 @@ async function generateWithGroq(prompt) {
 export async function generateEmail(recipientName = "", companyName = "your company") {
   const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
   
-  const prompt = `
-Write an email body matching this EXACT format.
-
-Company Name: ${companyName}
-
-INSTRUCTIONS:
-1. Generate a single SHORT, professional sentence to replace "[AI_COMPLIMENT]" about the company's work (e.g. "the work you all are doing at the intersection of AI and product development is genuinely exciting."). If the company name is very generic (like "your company"), just write "the work you are doing is genuinely exciting." Do NOT use em dashes (—) in this sentence.
-2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown. Do NOT use bullet points. Do NOT use HTML tags. Do NOT use em dashes (—). Do NOT change any other part of the text.
-
-I came across your profile while exploring opportunities at ${companyName}. [AI_COMPLIMENT]
-
-I'm Anand, a recent graduate from IIIT Nagpur (2026). I've worked as a Backend Intern at Synup, where I optimized MySQL transactions and built atomic reservation logic using Node.js and AWS Lambda. Before that at BrandX, I worked on MongoDB-based data pipelines.
-
-On the AI side, I'm currently exploring RAG pipelines, AI Agents, and MCP and building hands-on projects as I go. I'm also a LeetCode Knight (Global top 2.44%, rating 2006).
-
-I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?
-`;
-
+  // Only ask Gemini for the compliment sentence — nothing else
+  const prompt = `Write ONE short professional sentence complimenting the company's work for a cold email.
+Company: ${companyName}
+Example output: the work you all are doing at the intersection of AI and product development is genuinely exciting.
+Rules: No em dashes. No quotes. No punctuation at start. End with a period. If company name is generic, write: the work you are doing is genuinely exciting.`;
 
   const myName = "Anand Shukla";
 
@@ -88,9 +75,9 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
     logger.info(`🤖 Using Gemini model: ${MODEL}`);
     logger.info(`👤 Recipient: ${recipientName || "unknown"}`);
 
-    let text = "";
+    let compliment = "the work you are doing is genuinely exciting.";
     let retries = 3;
-    let backoff = 10000; // start with 10s delay
+    let backoff = 10000;
 
     while (retries >= 0) {
       try {
@@ -111,7 +98,7 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.75,
-              maxOutputTokens: 1500,
+              maxOutputTokens: 100,
             }
           })
         });
@@ -137,8 +124,12 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
         const data = await response.json();
         
         if (data && data.candidates && data.candidates.length > 0) {
-          text = data.candidates[0].content.parts[0].text;
-          break; // Success
+          compliment = data.candidates[0].content.parts[0].text
+            .replace(/—/g, "-")
+            .replace(/`/g, "")
+            .replace(/\n/g, " ")
+            .trim();
+          break;
         } else {
           throw new Error("Unexpected API response format.");
         }
@@ -147,18 +138,17 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
         if (error.status === 429 || (error.message && error.message.includes('429'))) {
           logger.warn(`Gemini rate limit hit. Falling back to Groq...`);
           try {
-            text = await generateWithGroq(prompt);
-            logger.info("✅ Groq successfully generated text as fallback");
-            break; // Success with Groq
+            const groqRaw = await generateWithGroq(prompt);
+            compliment = groqRaw.replace(/—/g, "-").replace(/`/g, "").replace(/\n/g, " ").trim();
+            logger.info("✅ Groq successfully generated compliment as fallback");
+            break;
           } catch (groqError) {
             logger.error(`Groq fallback failed: ${groqError.message}`);
-            // If Groq also fails, we fall back to the original wait logic
             let waitSeconds = backoff / 1000;
             const rlError = new Error("Both Gemini and Groq (fallback) failed due to rate limit/errors");
             rlError.isRateLimit = true;
             rlError.waitSeconds = waitSeconds;
-            
-            backoff *= 2; // exponential backoff for next iteration
+            backoff *= 2;
             throw rlError;
           }
         } else {
@@ -174,9 +164,17 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
 
     logger.info("✅ Email generated");
 
+    // Build paragraphs in code — guaranteed spacing always
+    const paragraphs = [
+      `I came across your profile while exploring opportunities at ${companyName}. ${compliment}`,
+      `I'm Anand, a recent graduate from IIIT Nagpur (2026). I've worked as a Backend Intern at Synup, where I optimized MySQL transactions and built atomic reservation logic using Node.js and AWS Lambda. Before that at BrandX, I worked on MongoDB-based data pipelines.`,
+      `On the AI side, I'm currently exploring RAG pipelines, AI Agents, and MCP and building hands-on projects as I go. I'm also a LeetCode Knight (Global top 2.44%, rating 2006).`,
+      `I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?`,
+    ];
+
     return {
       subject: SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
-      html: buildBeautifulTemplate(greeting, text, { myName, ...contact }),
+      html: buildBeautifulTemplate(greeting, paragraphs, { myName, ...contact }),
     };
   } catch (error) {
     logger.error("❌ Gemini generation failed:", error.message);
@@ -189,31 +187,12 @@ I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if
 
 function buildBeautifulTemplate(
   greeting,
-  emailText,
+  paragraphs,
   { myName, phone, email, portfolio, resume }
 ) {
-  let body = emailText;
-  
-  // Extract content if wrapped in code blocks
-  const codeBlockMatch = body.match(/```(?:html|markdown|text)?\n?([\s\S]*?)```/i);
-  if (codeBlockMatch) {
-    body = codeBlockMatch[1];
-  }
-
-  // Clean up and split into paragraphs
-  body = body
-    .replace(/`/g, "")
-    .replace(/\r/g, "")
-    .trim();
-
-  // Split on double newlines (paragraph breaks) and wrap each in <p> with spacing
-  const paragraphs = body.split(/\n{2,}/);
-  body = paragraphs
-    .map(para => {
-      // Within a paragraph, replace single newlines with <br>
-      const inner = para.replace(/\n/g, "<br>");
-      return `<p style="margin:0 0 14px 0;">${inner}</p>`;
-    })
+  // Build paragraph HTML — each paragraph gets proper spacing
+  const bodyHtml = paragraphs
+    .map(para => `<p style="margin:0 0 16px 0;">${para}</p>`)
     .join("");
 
   return `
@@ -234,7 +213,7 @@ function buildBeautifulTemplate(
 
   <!-- AI-Generated Body -->
   <div style="font-size:15px;line-height:1.8;color:#333;margin-bottom:20px;">
-    ${body}
+    ${bodyHtml}
   </div>
 
   <!-- Signature -->
