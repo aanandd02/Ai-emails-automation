@@ -27,28 +27,35 @@ export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
       }
 
       // GAS can return HTTP 200 with an error body — must check content
+      // GAS script returns: {sent: true} on success, {error: "msg"} on failure
       let parsed;
       try {
         parsed = JSON.parse(rawText);
       } catch {
-        // If response is not JSON, treat as success (old GAS scripts return plain text)
-        return { success: true };
+        // Non-JSON response (e.g. plain text error) — treat as failure
+        throw new Error(`GAS returned non-JSON response: ${rawText.slice(0, 200)}`);
       }
 
-      // If GAS explicitly signals failure in the body
-      if (parsed && parsed.success === false) {
-        const errMsg = parsed.error || parsed.message || "GAS reported failure";
+      // GAS error case: { error: "some message" }
+      if (parsed && parsed.error) {
+        const errMsg = parsed.error;
         // Check for quota/rate limit keywords
         const isQuota =
           errMsg.toLowerCase().includes("quota") ||
           errMsg.toLowerCase().includes("limit") ||
           errMsg.toLowerCase().includes("rate") ||
-          errMsg.toLowerCase().includes("exceeded");
+          errMsg.toLowerCase().includes("exceeded") ||
+          errMsg.toLowerCase().includes("service");
         const err = new Error(`GAS script error: ${errMsg}`);
         if (isQuota) {
           err.isRateLimit = true;
         }
         throw err;
+      }
+
+      // GAS success case: { sent: true }
+      if (!parsed || parsed.sent !== true) {
+        throw new Error(`GAS returned unexpected response: ${rawText.slice(0, 200)}`);
       }
 
       return parsed;
