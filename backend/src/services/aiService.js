@@ -10,11 +10,12 @@ const STYLES = [
 ];
 
 const SUBJECTS = [
-  "AI Engineer | RAG · AI Agents · LangChain · Node.js | LeetCode Knight (2006)",
-  "Backend + AI Engineer | LLMs · Vector DBs · AWS Serverless | Anand Shukla",
-  "AI Engineer (Backend) | RAG Pipelines · MCP · LangChain | IIIT Nagpur '26",
-  "SDE-1 / AI Engineer | AI Agents · Node.js · AWS Lambda | LeetCode Knight",
-  "Actively Exploring AI/Backend Roles | RAG · Agents · LangChain · Node.js",
+  "Full-time SDE / AI Engineer role — Anand Shukla (IIIT Nagpur '26)",
+  "Exploring full-time SDE-1 / AI Engineer roles — LeetCode Knight, 2 internships",
+  "SDE-1 / AI Engineer opening at {company}? — Quick intro from Anand",
+  "Full-time opportunity — Backend + AI Engineer | Node.js · AWS · RAG",
+  "Actively seeking SDE / AI Engineer role — IIIT Nagpur grad, LeetCode top 2.4%",
+  "Open to SDE-1 / AI Engineer roles at {company} — Anand Shukla",
 ];
 
 export async function generateUniqueSubject() {
@@ -98,7 +99,8 @@ Rules: No em dashes. No quotes. No punctuation at start. End with a period. If c
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.75,
-              maxOutputTokens: 100,
+              maxOutputTokens: 500,
+              thinkingConfig: { thinkingBudget: 0 },
             }
           })
         });
@@ -167,13 +169,13 @@ Rules: No em dashes. No quotes. No punctuation at start. End with a period. If c
     // Build paragraphs in code — guaranteed spacing always
     const paragraphs = [
       `I came across your profile while exploring opportunities at ${companyName}. ${compliment}`,
-      `I'm Anand, a recent graduate from IIIT Nagpur (2026). I've worked as a Backend Intern at Synup, where I optimized MySQL transactions and built atomic reservation logic using Node.js and AWS Lambda. Before that at BrandX, I worked on MongoDB-based data pipelines.`,
+      `I'm Anand, a recent graduate from IIIT Nagpur (2026) with two backend SDE internships (Synup and BrandX), where I worked with Node.js, AWS Lambda, MySQL, and MongoDB.`,
       `On the AI side, I'm currently exploring RAG pipelines, AI Agents, and MCP and building hands-on projects as I go. I'm also a LeetCode Knight (Global top 2.44%, rating 2006).`,
       `I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?`,
     ];
 
     return {
-      subject: SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
+      subject: SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)].replace("{company}", companyName),
       html: buildBeautifulTemplate(greeting, paragraphs, { myName, ...contact }),
     };
   } catch (error) {
