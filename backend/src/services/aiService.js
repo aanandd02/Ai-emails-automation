@@ -57,26 +57,21 @@ export async function generateEmail(recipientName = "", companyName = "your comp
   const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
   
   const prompt = `
-Write an email body matching this EXACT format. 
+Write an email body matching this EXACT format.
 
 Company Name: ${companyName}
 
 INSTRUCTIONS:
-1. Generate a single SHORT, professional sentence to replace "[AI_COMPLIMENT]" about the company's work (e.g. "the work you all are doing at the intersection of AI and tech staffing is genuinely exciting."). If the company name is very generic (like "your company"), just write "the work you are doing is genuinely exciting."
-2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown backticks. Do NOT use HTML tags.
+1. Generate a single SHORT, professional sentence to replace "[AI_COMPLIMENT]" about the company's work (e.g. "the work you all are doing at the intersection of AI and product development is genuinely exciting."). If the company name is very generic (like "your company"), just write "the work you are doing is genuinely exciting."
+2. Output EXACTLY the text below, replacing [Company Name] and [AI_COMPLIMENT]. Do NOT use Markdown. Do NOT use bullet points. Do NOT use HTML tags. Do NOT change any other part of the text.
 
-I came across your profile while exploring opportunities at ${companyName} - [AI_COMPLIMENT]
+I came across your profile while exploring opportunities at ${companyName} — [AI_COMPLIMENT]
 
-I'm Anand, a recent graduate from IIIT Nagpur (2026) — I build backend systems and AI-powered products:
+I'm Anand, a recent graduate from IIIT Nagpur (2026). I've worked as a Backend Intern at Synup, where I optimized MySQL transactions and built atomic reservation logic using Node.js and AWS Lambda. Before that at BrandX, I worked on MongoDB-based data pipelines.
 
-• Backend Intern at Synup — optimized MySQL transactions, built atomic reservation logic (Node.js, AWS Lambda)
-• Backend Intern at BrandX — MongoDB-based data pipelines
-• Built RAG pipelines using LangChain, Vector DBs (embeddings + semantic search)
-• AI Agents with ReAct, Tool Calling, and Multi-agent workflows
-• Familiar with MCP (Model Context Protocol) for connecting LLMs to external tools
-• LeetCode Knight — Global top 2.44%, rating 2006
+On the AI side, I'm currently exploring RAG pipelines, AI Agents, and MCP — building hands-on projects as I go. I'm also a LeetCode Knight (Global top 2.44%, rating 2006).
 
-I'm actively looking for AI Engineer / SDE-1 roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?
+I'm actively looking for SDE-1 or AI Engineer roles and would love to explore if there's a fit at ${companyName}. Would you be open to a quick 10-minute call?
 `;
 
 
