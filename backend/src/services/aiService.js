@@ -200,12 +200,21 @@ function buildBeautifulTemplate(
     body = codeBlockMatch[1];
   }
 
+  // Clean up and split into paragraphs
   body = body
     .replace(/`/g, "")
     .replace(/\r/g, "")
-    .replace(/\n{2,}/g, "<br><br>")
-    .replace(/\n/g, "<br>")
     .trim();
+
+  // Split on double newlines (paragraph breaks) and wrap each in <p> with spacing
+  const paragraphs = body.split(/\n{2,}/);
+  body = paragraphs
+    .map(para => {
+      // Within a paragraph, replace single newlines with <br>
+      const inner = para.replace(/\n/g, "<br>");
+      return `<p style="margin:0 0 14px 0;">${inner}</p>`;
+    })
+    .join("");
 
   return `
 <!DOCTYPE html>
