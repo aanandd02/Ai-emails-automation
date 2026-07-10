@@ -36,54 +36,58 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       stats,
     });
 
-    const validUsers = users
+    const allValidUsers = users
       .map((u, index) => ({
         ...u,
         rowNumber: index + 2,
       }))
       .filter((u) => u.name && u.email);
 
-    stats.validUsers = validUsers.length;
+    stats.validUsers = allValidUsers.length;
+
+    // ── Categorise by current sheet status ──────────────────────────────────
+    const sentUsers    = allValidUsers.filter(u => u.status?.toLowerCase() === "sent");
+    const failedUsers  = allValidUsers.filter(u => u.status?.toLowerCase() === "failed");
+    const pendingUsers = allValidUsers.filter(u => !u.status || u.status.trim() === "");
+
+    // Pre-count already-sent rows so stats stay accurate
+    stats.skipped   = sentUsers.length;
+    stats.processed = sentUsers.length;
 
     emit({
       type: "progress",
       level: "info",
-      message: `Valid users ready: ${validUsers.length}`,
-      total: validUsers.length,
+      message: `📊 Sheet Summary → ✅ ${sentUsers.length} already sent (skipping) | ♻️ ${failedUsers.length} failed (retrying first) | 📬 ${pendingUsers.length} new pending`,
+      total: allValidUsers.length,
       stats,
     });
 
+    if (failedUsers.length > 0) {
+      emit({
+        type: "progress",
+        level: "warn",
+        message: `🔁 ${failedUsers.length} previously failed contact(s) will be retried before new ones.`,
+        stats,
+      });
+    }
+
+    // Failed contacts first → then new/pending ones
+    const toProcess = [...failedUsers, ...pendingUsers];
+
+    if (toProcess.length === 0) {
+      emit({
+        type: "status",
+        phase: "completed",
+        level: "success",
+        message: "✅ All contacts have already been sent. Nothing left to process.",
+        stats,
+      });
+      return { stopped: false, stats };
+    }
+
     let currentRateLimitBackoff = 10;
-    let skipStreakCount = 0;
-    let skipStreakStartPosition = 0;
-    let skipStreakLastEmail = "";
-    let isInitialSkipPhase = true;
 
-    const flushSkipStreak = (position, force = false) => {
-      if (skipStreakCount === 0) return;
-
-      if (isInitialSkipPhase) {
-        emit({
-          type: "progress",
-          level: "info",
-          message: `Resuming Operation: ${skipStreakCount} contacts already processed. Starting from Row ${position}...`,
-          stats,
-        });
-        isInitialSkipPhase = false;
-      } else if (force || skipStreakCount > 1) {
-        emit({
-          type: "progress",
-          level: "warn",
-          message: `Skipped ${skipStreakCount} already-sent contacts (Rows ${skipStreakStartPosition}-${position - 1}).`,
-          stats,
-        });
-      }
-
-      skipStreakCount = 0;
-      skipStreakStartPosition = 0;
-    };
-
-    for (let i = 0; i < validUsers.length; i++) {
+    for (let i = 0; i < toProcess.length; i++) {
       ensureNotStopped();
 
       if (limit && stats.sent >= limit) {
@@ -97,30 +101,18 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         break;
       }
 
-      const { name, email, status, rowNumber } = validUsers[i];
+      const { name, email, status, rowNumber } = toProcess[i];
       const position = i + 1;
-      const alreadySent = status?.toLowerCase() === "sent";
-
-      if (alreadySent) {
-        stats.skipped += 1;
-        stats.processed += 1;
-        skipStreakCount += 1;
-        if (skipStreakStartPosition === 0) skipStreakStartPosition = rowNumber;
-        continue;
-      }
-
-      // First non-skipped user found
-      flushSkipStreak(rowNumber);
-      isInitialSkipPhase = false;
+      const isRetry = status?.toLowerCase() === "failed";
 
       emit({
         type: "progress",
         level: "info",
         stage: "preparing",
-        message: `[${position}/${validUsers.length}] Processing ${email} (Generating AI Content...)`,
+        message: `[${position}/${toProcess.length}] ${isRetry ? "♻️ Retrying" : "📬 Processing"} ${email} (Generating AI Content...)`,
         currentEmail: email,
         position,
-        total: validUsers.length,
+        total: toProcess.length,
         stats,
       });
 
@@ -129,7 +121,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         if (email.includes("@")) {
           const domain = email.split("@")[1].toLowerCase();
           const genericDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"];
-          
+
           if (!genericDomains.includes(domain)) {
             // Simple extraction: synup.com -> Synup
             let extracted = domain.split(".")[0];
@@ -149,7 +141,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
                 ...mailEvent,
                 currentEmail: email,
                 position,
-                total: validUsers.length,
+                total: toProcess.length,
                 stats,
               });
             }
@@ -168,7 +160,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
             message: `Email not sent to ${email} — GAS returned sent=false`,
             currentEmail: email,
             position,
-            total: validUsers.length,
+            total: toProcess.length,
             stats,
           });
           continue;
@@ -178,7 +170,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         stats.sent += 1;
         stats.processed += 1;
 
-        // Reset rate limit backoff on successful AI generation & send
+        // Reset rate limit backoff on successful send
         currentRateLimitBackoff = 10;
 
         emit({
@@ -187,11 +179,11 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           message: `Successfully dispatched to ${email} (Row ${rowNumber})`,
           currentEmail: email,
           position,
-          total: validUsers.length,
+          total: toProcess.length,
           stats,
         });
 
-        if (position < validUsers.length && sendResult.waitSeconds > 0) {
+        if (position < toProcess.length && sendResult.waitSeconds > 0) {
           await waitWithCountdown(sendResult.waitSeconds, {
             onEvent: (mailEvent) =>
               emit({
@@ -199,7 +191,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
                 ...mailEvent,
                 currentEmail: email,
                 position,
-                total: validUsers.length,
+                total: toProcess.length,
                 stats,
               }),
             shouldStop,
@@ -211,7 +203,21 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           throw err;
         }
 
-        // GAS quota/rate limit — use exponential backoff and retry same user
+        // GAS daily quota exhausted — retrying won't help until tomorrow
+        if (err.isDailyQuota) {
+          emit({
+            type: "progress",
+            level: "error",
+            message: `⛔ GAS Daily Quota Exhausted! ${stats.sent} emails sent today. Remaining ${toProcess.length - (stats.processed - sentUsers.length)} contacts untouched — they will be processed on next run. Automation stopping.`,
+            currentEmail: email,
+            position,
+            total: toProcess.length,
+            stats,
+          });
+          throw new Error("GAS daily quota exhausted");
+        }
+
+        // GAS temporary rate limit — exponential backoff then retry same contact
         if (err.isRateLimit) {
           emit({
             type: "progress",
@@ -219,7 +225,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
             message: `Rate limit hit. Waiting ${currentRateLimitBackoff}s before retrying ${email}...`,
             currentEmail: email,
             position,
-            total: validUsers.length,
+            total: toProcess.length,
             stats,
           });
 
@@ -230,7 +236,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
                 ...mailEvent,
                 currentEmail: email,
                 position,
-                total: validUsers.length,
+                total: toProcess.length,
                 stats,
               }),
             shouldStop,
@@ -239,11 +245,12 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           // Exponentially increase backoff for next rate limit (up to ~1 hour)
           currentRateLimitBackoff = Math.min(currentRateLimitBackoff * 2, 3600);
 
-          // Decrement i to retry the same user on the next iteration
+          // Decrement i to retry the same contact on next iteration
           i--;
           continue;
         }
 
+        // ── Any other error → mark Failed in sheet so next run retries it ──
         stats.failed += 1;
         stats.processed += 1;
         emit({
@@ -252,21 +259,21 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
           message: `Failed for ${email}: ${err.message}`,
           currentEmail: email,
           position,
-          total: validUsers.length,
+          total: toProcess.length,
           stats,
         });
 
         await updateStatusInGoogleSheet(rowNumber, "Failed");
 
-        // Wait briefly after a failure to avoid hitting rate limits on rapid failures
-        if (position < validUsers.length) {
+        // Wait briefly after a failure before continuing
+        if (position < toProcess.length) {
           emit({
             type: "progress",
             level: "info",
             message: `Waiting 5s after failure before continuing...`,
             currentEmail: email,
             position,
-            total: validUsers.length,
+            total: toProcess.length,
             stats,
           });
           await waitWithCountdown(5, {
@@ -276,7 +283,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
                 ...mailEvent,
                 currentEmail: email,
                 position,
-                total: validUsers.length,
+                total: toProcess.length,
                 stats,
               }),
             shouldStop,
@@ -285,17 +292,16 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       }
     }
 
-    flushSkipStreak(validUsers.length + 1, true);
-
     emit({
       type: "status",
       phase: "completed",
       level: "success",
-      message: "All emails processed successfully",
+      message: `✅ Done. Sent: ${stats.sent} | Failed: ${stats.failed} | Skipped (already sent): ${stats.skipped}`,
       stats,
     });
 
     return { stopped: false, stats };
+
   } catch (err) {
     if (err.message === "Automation stopped by user") {
       emit({
@@ -306,6 +312,18 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         stats,
       });
       return { stopped: true, stats };
+    }
+
+    // Daily quota hit — treat as a graceful completion (not a crash)
+    if (err.message === "GAS daily quota exhausted") {
+      emit({
+        type: "status",
+        phase: "completed",
+        level: "warn",
+        message: `⚠️ Daily email quota exhausted. ${stats.sent} emails sent. Resume tomorrow to continue from where you left off. Remaining contacts are untouched in the sheet.`,
+        stats,
+      });
+      return { stopped: false, stats };
     }
 
     emit({

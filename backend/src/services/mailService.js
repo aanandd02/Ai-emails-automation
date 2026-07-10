@@ -39,15 +39,29 @@ export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
       // GAS error case: { error: "some message" }
       if (parsed && parsed.error) {
         const errMsg = parsed.error;
-        // Check for quota/rate limit keywords
-        const isQuota =
-          errMsg.toLowerCase().includes("quota") ||
-          errMsg.toLowerCase().includes("limit") ||
-          errMsg.toLowerCase().includes("rate") ||
-          errMsg.toLowerCase().includes("exceeded") ||
-          errMsg.toLowerCase().includes("service");
+        const errLower = errMsg.toLowerCase();
+
+        // Daily quota exhausted — retrying won't help until tomorrow
+        const isDailyQuota =
+          errLower.includes("one day") ||
+          errLower.includes("daily") ||
+          (errLower.includes("gmail") && errLower.includes("too many")) ||
+          (errLower.includes("service invoked too many"));
+
+        // Temporary rate limit — can retry after a short wait
+        const isRateLimit =
+          !isDailyQuota &&
+          (errLower.includes("quota") ||
+            errLower.includes("limit") ||
+            errLower.includes("rate") ||
+            errLower.includes("exceeded") ||
+            errLower.includes("service"));
+
         const err = new Error(`GAS script error: ${errMsg}`);
-        if (isQuota) {
+        if (isDailyQuota) {
+          err.isDailyQuota = true;
+          err.isRateLimit = false;
+        } else if (isRateLimit) {
           err.isRateLimit = true;
         }
         throw err;
@@ -68,8 +82,8 @@ export async function sendEmailSafely(to, subject, htmlContent, options = {}) {
 
     await Promise.race([mailPromise, timeoutPromise]);
   } catch (error) {
-    // Re-throw rate limit errors as-is so caller can handle them specially
-    if (error.isRateLimit) throw error;
+    // Re-throw rate limit AND daily quota errors as-is so caller can handle them specially
+    if (error.isDailyQuota || error.isRateLimit) throw error;
     throw new Error(`Failed to send email to ${to}: ${error.message}`);
   }
 
