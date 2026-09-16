@@ -56,16 +56,18 @@ const sheets = google.sheets({ version: "v4", auth });
 export async function readGoogleSheetData() {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: GOOGLE_SHEET_ID,
-    range: `${SHEET_NAME}!A:C`,
+    range: `${SHEET_NAME}!A:E`,
   });
 
   const rows = response.data.values || [];
   const [headers, ...data] = rows;
 
   return data.map((row) => ({
-    name: row[0],
-    email: row[1],
-    status: row[2] || "",
+    name: row[0] ? String(row[0]).trim() : "",
+    email: row[1] ? String(row[1]).trim() : "",
+    status: row[2] ? String(row[2]).trim() : "",
+    company: row[3] ? String(row[3]).trim() : "",
+    role: row[4] ? String(row[4]).trim() : "",
   }));
 }
 

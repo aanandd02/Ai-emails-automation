@@ -101,7 +101,7 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
         break;
       }
 
-      const { name, email, status, rowNumber } = toProcess[i];
+      const { name, email, status, rowNumber, company } = toProcess[i];
       const position = i + 1;
       const isRetry = status?.toLowerCase() === "failed";
 
@@ -117,8 +117,8 @@ export async function sendEmailsFromGoogleSheet(options = {}) {
       });
 
       try {
-        let companyName = "your company";
-        if (email.includes("@")) {
+        let companyName = company && company.trim() ? company.trim() : "your company";
+        if (companyName === "your company" && email.includes("@")) {
           const domain = email.split("@")[1].toLowerCase();
           const genericDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"];
 
