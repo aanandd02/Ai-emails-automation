@@ -135,6 +135,58 @@ export const profile = {
       "Postman",
     ],
   },
+  rawResume: `
+Anand Shukla
+Mirzapur, Uttar Pradesh, India | +91-9076823328 | aanandd9076@gmail.com
+LinkedIn | GitHub | LeetCode
+Education
+Indian Institute of Information Technology Nagpur Bachelor of Technology in Electronics and Communication Engineering Nov 2022 – Jun 2026
+Nagpur, Maharashtra
+Relevant Coursework: Data Structures & Algorithms, Operating Systems, Object-Oriented Programming, Database Management Systems, Computer Networks
+
+Technical Skills
+Programming: Python, Java, JavaScript, SQL
+AI / LLM: LLM Applications, Prompt Engineering, RAG, Agentic AI, Tool Calling / Function Calling, AI Evaluation, Embeddings, Semantic Search, Multimodal AI
+AI Frameworks: LangChain, LangGraph, LlamaIndex, Hugging Face Transformers, OpenAI API, Google Gemini API, Ollama
+Vector Search: Qdrant, Embeddings, Semantic Search, Hybrid Search, Reranking
+Backend: FastAPI, Node.js, Express.js, REST APIs, WebSockets, JWT, Microservices, Event-Driven Architecture
+Databases: PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB
+Cloud / DevOps: AWS Lambda, EC2, API Gateway, S3, SQS, SNS, CloudWatch, Docker, Git, GitHub, Postman
+
+Experience
+Synup Jan 2026 – Apr 2026
+SDE Intern Bengaluru, Karnataka, India
+• Architected a serverless microservices pipeline using AWS Lambda, MySQL and Elasticsearch for event-driven fan-out processing, reducing failures by ~40%.
+• Resolved a critical race condition using transaction-safe MySQL updates across concurrent services, improving consistency and reliability of distributed workflows.
+
+BrandX Oct 2025 – Jan 2026
+SDE Intern Noida, India
+• Developed a concurrent-safe booking system using Node.js and MongoDB with atomic slot allocation and reservation workflows.
+• Optimized database queries and introduced compound indexing, reducing API response latency by ~35% under peak traffic.
+
+Projects
+Enterprise RAG & Agent Platform (Python, FastAPI, LangGraph, Qdrant, PostgreSQL, Redis, Docker)
+Production-grade autonomous AI knowledge system
+• Built a production-style RAG platform for PDF/DOCX knowledge bases with document parsing, semantic chunking, embeddings, hybrid retrieval, reranking and citation-grounded answer generation.
+• Developed a LangGraph-based multi-tool agent supporting query rewriting, knowledge retrieval, web search, PostgreSQL tools, conversation memory and multi-step reasoning.
+• Implemented asynchronous document processing with Redis, Celery and Docker, enabling scalable ingestion and background task execution across distributed workloads.
+• Added RAG evaluation pipelines using RAGAS to measure retrieval quality, answer relevance, faithfulness and hallucination-related performance.
+
+AI Code Intelligence & Review Agent (Python, FastAPI, React, LLM APIs, Qdrant, Tree-sitter, Docker)
+Repository-aware AI coding assistant
+• Developed a repository-aware coding agent that indexes source code for semantic search and generates context-aware explanations, reviews and fixes.
+• Built an agentic workflow for repository analysis, issue investigation, code search, test generation and structured patch recommendations using tool calling.
+• Implemented language-aware code chunking with Tree-sitter and vector retrieval to supply relevant code context to LLMs.
+
+Multimodal Document Intelligence (Python, FastAPI, Vision LLM, OCR, OpenCV, AWS S3, SQS, Lambda)
+AI-powered document understanding pipeline
+• Built a multimodal document processing pipeline for invoices and business documents combining OCR, vision-language models and structured JSON extraction.
+• Designed asynchronous AWS S3/SQS/Lambda processing with validation, confidence scoring and failure handling for scalable document workloads.
+
+Achievements
+• LeetCode Knight with a contest rating of 2006, ranking in the top 2.44% globally; solved 400+ algorithmic problems across data structures and advanced algorithms.
+• Delivered and deployed 6+ backend systems using Node.js, MongoDB, MySQL and AWS, applying distributed systems and scalable architecture principles.
+  `.trim(),
 };
 
 export default profile;

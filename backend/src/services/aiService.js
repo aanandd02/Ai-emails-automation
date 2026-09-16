@@ -19,35 +19,7 @@ export async function generateUniqueSubject(companyName = "your company") {
 }
 
 function buildResumeContext() {
-  return `
-Candidate: ${profile.name}
-Education: ${profile.education.institution} (${profile.education.degree}, ${profile.education.timeline})
-Achievements:
-- ${profile.achievements.leetcode.title} (Rating: ${profile.achievements.leetcode.rating}, Global Top ${profile.achievements.leetcode.topPercent}, ${profile.achievements.leetcode.problemsSolved} problems solved)
-- ${profile.achievements.deployedSystems}
-
-Work Experience:
-${profile.experience
-  .map(
-    (e) =>
-      `* ${e.company} (${e.role}, ${e.timeline}): ${e.highlights.join("; ")} | Tech: ${e.techStack.join(", ")}`
-  )
-  .join("\n")}
-
-Key Projects:
-${profile.projects
-  .map(
-    (p) =>
-      `* ${p.name} (${p.tagline}): ${p.highlights.join("; ")} | Tech: ${p.tech.join(", ")}`
-  )
-  .join("\n")}
-
-Skills:
-- Programming: ${profile.skills.programming.join(", ")}
-- AI & LLMs: ${profile.skills.ai.join(", ")}, ${profile.skills.frameworks.join(", ")}, ${profile.skills.vectorSearch.join(", ")}
-- Backend & DBs: ${profile.skills.backend.join(", ")}, ${profile.skills.databases.join(", ")}
-- Cloud & DevOps: ${profile.skills.cloudDevOps.join(", ")}
-`;
+  return profile.rawResume;
 }
 
 function buildPrompt(recipientName = "", companyName = "your company") {
@@ -194,7 +166,7 @@ function getDefaultParagraphs(companyName) {
   return [
     `I came across your profile while exploring opportunities at ${companyName}, where the engineering problems you are solving are genuinely exciting.`,
     `I'm Anand, graduating from IIIT Nagpur (B.Tech '26) with backend SDE internships at <b>Synup</b> and <b>BrandX</b>. At Synup, I built serverless microservices with AWS Lambda, MySQL, and Elasticsearch, cutting pipeline failures by ~40% and resolving distributed race conditions. At BrandX, I engineered concurrent-safe booking services with Node.js and MongoDB, reducing peak API latency by ~35%. Across my work, I've built and deployed 6+ production backend systems.`,
-    `On the AI side, I build production-grade agentic systems — including an <b>Enterprise RAG & Agent Platform</b> using Python, FastAPI, LangGraph, and Qdrant (hybrid retrieval, reranking, and RAGAS evaluations), as well as an AST-aware code intelligence agent. Additionally, I'm a <b>LeetCode Knight</b> (Contest Rating 2006, Global Top 2.44%, 400+ problems solved).`,
+    `On the AI side, I build production-grade systems including an <b>Enterprise RAG & Agent Platform</b> (Python, FastAPI, LangGraph, Qdrant, RAGAS), an <b>AI Code Intelligence Agent</b> (Tree-sitter AST parsing), and a <b>Multimodal Document Intelligence pipeline</b> (Vision LLMs, AWS S3/SQS/Lambda). Additionally, I'm a <b>LeetCode Knight</b> (Contest Rating 2006, Global Top 2.44%, 400+ problems solved).`,
     `I'm actively looking for full-time <b>SDE-1</b> or <b>AI Engineer</b> roles and would love to see if there's a strong fit with your team at ${companyName}. Would you be open to a brief 10-minute chat?`,
   ];
 }
